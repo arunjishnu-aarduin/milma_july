@@ -1,0 +1,29 @@
+.main{
+	padding-top: 15px;
+}
+.col-sm-4{
+	padding-bottom: 50px;
+}
+.diary_name{
+    padding-left: 30px;
+}
+.view_data{
+	padding-top: 15px;
+    padding-left: 30px;
+}
+table, th, td {
+    border: 3px solid #52b0c7;
+    padding-top: 5px;
+    padding-left: 20px;
+    padding-right: 20px;
+    padding-bottom: 5px;
+    max-width: 150px;
+    text-align: center;
+}
+h1{
+	color: #2f6786;
+	font-size: 26px;
+}
+th, td {
+    width: 30px;
+}

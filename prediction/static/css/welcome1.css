@@ -1,0 +1,176 @@
+nav.sidebar.navbar ,nav.sidebarright.navbar{
+	border-radius: 0px;
+	border-color: #52b0c7;
+}
+
+	/* Add gap to nav and right windows.*/
+.main{
+	padding: 35px 150px 0px 150px;
+}
+
+@media(min-width: 768px){
+	/*Center Icons*/
+
+nav.sidebar a{
+	padding-right: 0px;
+}
+
+	/*adds border to bottom nav boxes*/
+nav.sidebar .navbar-nav > li{
+	border-bottom: 1px #e5e5e5 solid;
+}
+
+	/* Colors/style dropdown box*/
+nav.sidebar .navbar-nav .open .dropdown-menu {
+	position: static;
+	float: none;
+	width: auto;
+	margin-top: 0;
+	background-color: transparent;
+	border: 0;
+	-webkit-box-shadow: none;
+	box-shadow: none;
+}
+
+	/*allows nav box to use 100% width*/
+nav.sidebar .navbar-collapse, nav.sidebar .container-fluid{
+	padding: 0px 0px 0 0px;
+}
+
+	/*colors dropdown box text */
+.navbar-inverse .navbar-nav .open .dropdown-menu>li>a {
+	color: #777;
+}
+
+	/*gives sidebar width/height*/
+nav.sidebar{
+	width: 200px;
+	height:;
+	margin-left: -160px;
+	float: left;
+	z-index: 8000;
+	margin-bottom: 0px;
+	margin-top: 100px;
+	border-radius: 0px;
+}
+
+	/*give sidebar 100% width;*/
+nav.sidebar li {
+	width: 100%;
+}
+
+	/* Move nav to full on mouse over*/
+nav.sidebar:hover{
+	margin-left: 0px;
+}
+
+	/*for hiden things when navbar hidden*/
+.forAnimate{
+	opacity: 0;
+}
+
+
+}
+@media (min-width: 1330px) {
+
+		/*Allow main to be next to Nav*/
+		.main{
+			width: calc(100% - 200px); /*keeps 100% minus nav size*/
+			margin-left: 200px;
+		}
+
+		/*Show all nav*/
+		nav.sidebar{
+			margin-left: 0px;
+			float: left;
+		}
+		/*Show hidden items on nav*/
+		nav.sidebar .forAnimate{
+			opacity: 1;
+		}
+}
+
+nav.sidebar .navbar-nav .open .dropdown-menu>li>a:hover, nav.sidebar .navbar-nav .open .dropdown-menu>li>a:focus {
+	color: #CCC;
+	background-color: transparent;
+}
+
+nav:hover .forAnimate{
+	opacity: 1;
+}
+section{
+	padding-left: 0px;
+}
+
+#milkbar,#creambar{
+	padding-top: 30px;
+}
+#milk,#cream{
+	padding-top: 10px;
+	background-color: #00a4ff;
+	border-color: #52b0c7;
+	border-radius: 5px;
+	padding-left: 30px;
+	height: 40px;
+	font-size: 16px;
+	color: white;
+}
+#subbarcontainer{
+	padding-left: 30px;
+	padding-top: 5px;
+}
+#subbar{
+	margin-top: 5px;
+	padding-top: 5px;
+	background-color: #52b0c7;
+	border-color: blue;
+	border-radius: 5px;
+	padding-left: 30px;
+	height: 30px;
+	font-size: 16px;
+	color: white;
+}
+
+
+
+
+.dropbtn {
+    cursor: pointer;
+}
+
+/* The container <div> - needed to position the dropdown content */
+.dropdown {
+    position: relative;
+    display: inline-block;
+}
+
+/* Dropdown Content (Hidden by Default) */
+.dropdown-content {
+    display: none;
+    position: absolute;
+    background-color: #f9f9f9;
+    min-width: 200px;
+    box-shadow: 0px 8px 16px 0px rgba(0,0,0,0.2);
+    z-index: 1;
+}
+
+/* Links inside the dropdown */
+.dropdown-content a {
+    color: black;
+    padding: 12px 16px;
+    text-decoration: none;
+    display: block;
+}
+
+/* Change color of dropdown links on hover */
+.dropdown-content a:hover {background-color: #f1f1f1}
+
+/* Show the dropdown menu on hover */
+.dropdown:hover .dropdown-content {
+    display: block;
+    background-color: ;
+}
+/* Change the background color of the dropdown button when the dropdown content is shown */
+.dropdown:hover .dropbtn {
+    background-color: ;
+}

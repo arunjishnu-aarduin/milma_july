@@ -1,0 +1,37 @@
+
+
+<html>
+	<head>
+
+  {% load static %}
+  <link rel="stylesheet" href="{% static 'stylesheets/bootstrap.min.css' %}" type="text/css"/>
+  <link rel="stylesheet" href="{% static 'stylesheets/jquery.dataTables.css' %}" type="text/css"/>
+    <script src="{% static 'js/jquery.min.js' %}"></script>
+    <script src="{% static 'js/bootstrap.min.js' %}"></script>
+    <script src="{% static 'js/jquery.dataTables.js' %}"></script>
+    <script>
+    $(document).ready(function() {
+        $('#example').DataTable();
+
+    } );
+    </script>
+		<style>
+		body {font-family: calibri;color:#4e7480;}
+		</style>
+	</head>
+	<body>
+	<div class="container">
+
+    {% block content %}
+
+        <form method="POST" class="post-form">{% csrf_token %}
+            {{ form.as_p }}
+
+            <button type="submit" class="save btn btn-default">Select</button>
+        </form>
+    {% endblock %}
+<table id="example" class="uk-table uk-table-hover uk-table-striped" width="100%" cellspacing="0">
+    </table>
+  </div>
+  	</body>
+  </html>

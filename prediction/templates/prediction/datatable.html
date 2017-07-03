@@ -1,0 +1,48 @@
+<html>
+	<head>
+	<title>Datatables</title>
+  {% load static %}
+  <link rel="stylesheet" href="{% static 'stylesheets/bootstrap.min.css' %}" type="text/css"/>
+  <link rel="stylesheet" href="{% static 'stylesheets/jquery.dataTables.css' %}" type="text/css"/>
+    <script src="{% static 'js/jquery.min.js' %}"></script>
+    <script src="{% static 'js/bootstrap.min.js' %}"></script>
+    <script src="{% static 'js/jquery.dataTables.js' %}"></script>
+    <script>
+    $(document).ready(function() {
+        $('#example').DataTable();
+
+    } );
+    </script>
+		<style>
+		body {font-family: calibri;color:#4e7480;}
+		</style>
+	</head>
+	<body>
+	<div class="container">
+
+
+<table id="example" class="uk-table uk-table-hover uk-table-striped" width="100%" cellspacing="0">
+        <thead>
+            <tr>
+                <th>Name</th>
+          
+            </tr>
+        </thead>
+        <tfoot>
+            <tr>
+                <th>Name</th>
+
+            </tr>
+        </tfoot>
+        <tbody>
+
+					{% for field in dataSet %}
+					   <tr><td>{{ field.name }}</td></tr>
+
+					{% endfor %}
+
+        </tbody>
+    </table>
+  </div>
+  	</body>
+  </html>
