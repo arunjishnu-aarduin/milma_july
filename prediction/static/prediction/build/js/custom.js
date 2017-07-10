@@ -2515,7 +2515,7 @@ if (typeof NProgress != 'undefined') {
 
           if ($("#datatable-buttons").length) {
 					$("#datatable-buttons").DataTable({
-					  dom: "Bfrt",
+					  dom: "Bfrtip",
 					  buttons: [
 						{
 						  extend: "copy",

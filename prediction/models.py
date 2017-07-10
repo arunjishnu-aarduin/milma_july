@@ -10,6 +10,7 @@ from django.db.models.functions import Coalesce
 from django.contrib.auth.models import User
 
 
+
 #choices
 ISSUE_CHOICES = (
     ('1', 'TYPE 1'),
@@ -45,11 +46,14 @@ def validate_positive(value):
 class Diary(models.Model):
     id=models.CharField(max_length=5,primary_key=True)
     name=models.CharField(max_length=50)
+
     def __str__(self):
         return self.id+"-"+self.name
 class Variant(models.Model):
     name=models.CharField(max_length=50)
     unit=models.PositiveSmallIntegerField()
+    class Meta:
+        unique_together = ('name', 'unit',)
     def __str__(self):
 		return self.name
 class Category(models.Model):
@@ -71,6 +75,9 @@ class Product(models.Model):
     category=models.ForeignKey('Category',on_delete=models.CASCADE)
     rate=models.DecimalField(max_digits=15,decimal_places=2,validators=[validate_positive])
 
+    class Meta:
+        unique_together = ('variant', 'category',)
+
     def __str__(self):
         return str(self.code)+"-"+self.category.name+"-"+self.variant.name
 
@@ -88,12 +95,34 @@ class Composition(models.Model):
     issue=models.ForeignKey('Issue',on_delete=models.CASCADE)
     ratio=models.DecimalField(max_digits=20,decimal_places=15,validators=[validate_positive])
     method=models.CharField(max_length=1,choices=METHOD_CHOICES)
+    class Meta:
+        unique_together = ('category', 'method','issue',)
+    def save(self, *args, **kwargs):
+
+        if self.category.name=="GHEE" or self.category.name=="BUTTER":
+            try:
+
+                issue_as_category=IssueAsCategory.objects.get(category=self.category)
+
+                fat_percentage_yield=FatPercentageYield.objects.get(category=self.category,issue=self.issue,method=self.method)
+
+                ratio_value=(issue_as_category.issue.fat/100)/((fat_percentage_yield.percentage/100)*(self.issue.fat/100))
+
+                self.ratio=ratio_value
+            except Exception as e:
+                print e
+
+                self.ratio=0
+        super(Composition, self).save(*args, **kwargs)
+
+
 
     @property
     def issueType(self):
         return self.issue.type
     @property
     def methodPercentage(self):
+
         method_percentage=MethodPercentage.objects.get(category=self.category,method=self.method)
         if method_percentage != None:
             return method_percentage.percentage
@@ -105,12 +134,37 @@ class MethodPercentage(models.Model):
     category=models.ForeignKey('Category',on_delete=models.CASCADE)
     method=models.CharField(max_length=1,choices=METHOD_CHOICES)
     percentage=models.DecimalField(max_digits=3,decimal_places=0,validators=[validate_positive,MaxValueValidator(100)])
+    class Meta:
+        unique_together = ('category', 'method','percentage',)
 
     def __str__(self):
         return self.category.name+"-"+str(self.method)+"-"+str(self.percentage)
 class IssueAsCategory(models.Model):
     issue=models.ForeignKey('Issue',on_delete=models.CASCADE)
     category=models.ForeignKey('Category',on_delete=models.CASCADE)
+    class Meta:
+        unique_together = ('issue', 'category',)
+    def __str__(self):
+        return self.issue.name+"-"+self.category.name
+class FatPercentageYield(models.Model):
+    category=models.ForeignKey('Category',on_delete=models.CASCADE)
+    issue=models.ForeignKey('Issue',on_delete=models.CASCADE)
+    method=models.CharField(max_length=1,choices=METHOD_CHOICES)
+    percentage=models.DecimalField(max_digits=3,decimal_places=0,validators=[validate_positive,MaxValueValidator(100)])
+    class Meta:
+        unique_together = ('issue', 'category','method',)
+
+
+    def save(self, *args, **kwargs):
+        super(FatPercentageYield, self).save(*args, **kwargs)
+        try:
+            category_obj=Composition.objects.get(category=self.category,issue=self.issue,method=self.method)
+
+            category_obj.save()
+        except Exception as e:
+            print "FatPercentageYield Exception:",e
+
+
     def __str__(self):
         return self.issue.name+"-"+self.category.name
 class ActualSale(models.Model):
@@ -118,6 +172,9 @@ class ActualSale(models.Model):
     product=models.ForeignKey('Product',on_delete=models.CASCADE)
     sales=models.PositiveIntegerField()
     diary=models.ForeignKey('Diary',on_delete=models.CASCADE)
+
+    class Meta:
+        unique_together = ('month', 'product','diary',)
 
     def __str__(self):
         return MONTHS[self.month]+"-"+str(self.product.code)+"-"+self.diary.name+"-"+str(self.sales)
@@ -154,6 +211,9 @@ class ActualStockin(models.Model):
     product=models.ForeignKey('Product',on_delete=models.CASCADE)
     quantity=models.PositiveIntegerField()
     from_diary=models.ForeignKey('Diary',on_delete=models.CASCADE,related_name="fromDiary")
+
+    class Meta:
+        unique_together = ('diary', 'month','product','from_diary',)
     def __str__(self):
         return MONTHS[self.month]+"-"+str(self.product.code)+"-"+str(self.quantity)+"-"+self.from_diary.name+"->"+self.diary.name
 
@@ -187,6 +247,8 @@ class ActualStockin(models.Model):
         except Exception as e:
             print "Growth Factor not exist(Stockin)"
             return 0
+
+
     @property
     def targetStockOutQuantity(self):
         #target_stock_out=ActualStockin.objects.filter(from_diary=self.from_diary,month=self.month,product=self.product).aggregate(actual_stock_out=Coalesce(Sum('quantity'),0))['actual_stock_out']
@@ -222,12 +284,17 @@ class ProductCategoryGrowthFactor(models.Model):
     growth_factor=models.DecimalField(max_digits=3,decimal_places=0,validators=[validate_positive,MaxValueValidator(100)])
     month=models.PositiveSmallIntegerField(choices=MONTHS.items())
     diary=models.ForeignKey('Diary',on_delete=models.CASCADE)
+    class Meta:
+        unique_together = ('category', 'month','diary',)
     def __str__(self):
         return MONTHS[self.month]+"-"+self.category.name+"-"+self.diary.name
+
 
 class ProductConfiguration(models.Model):
     product=models.ForeignKey('Product',on_delete=models.CASCADE)
     diary=models.ForeignKey('Diary',on_delete=models.CASCADE)
+    class Meta:
+        unique_together = ('product', 'diary',)
     def __str__(self):
         return self.product.name+"-"+self.diary.name
 
@@ -235,13 +302,29 @@ class ActualWMProcurement(models.Model):
     month=models.PositiveSmallIntegerField(choices=MONTHS.items())
     procurement=models.DecimalField(max_digits=20,decimal_places=2,validators=[validate_positive])
     diary=models.ForeignKey('Diary',on_delete=models.CASCADE)
+    class Meta:
+        unique_together = ('month', 'diary',)
     def __str__(self):
-        return MONTHS[self.month]+"-"+self.diary.name+"-"+str(procurement)
+        return MONTHS[self.month]+"-"+self.diary.name+"-"+str(self.procurement)
+
+    @property
+    def growthFactor(self):
+        try:
+            procurement_growth_factor=ProcurementGrowthFactor.objects.get(month=self.month,diary=self.diary)
+            return procurement_growth_factor.growth_factor
+        except Exception as e:
+            print "Procurement Growth Factor not exist"
+            return 0
+    @property
+    def targetProcurement(self):
+        return (self.procurement+(self.procurement*self.growthFactor)/100)
 
 class ProcurementGrowthFactor(models.Model):
     month=models.PositiveSmallIntegerField(choices=MONTHS.items())
     growth_factor=models.DecimalField(max_digits=3,decimal_places=0,validators=[validate_positive,MaxValueValidator(100)])
     diary=models.ForeignKey('Diary',on_delete=models.CASCADE)
+    class Meta:
+        unique_together = ('month', 'diary',)
     def __str__(self):
         return MONTHS[self.month]+"-"+self.diary.name
 class UserDiaryLink(models.Model):

@@ -1,0 +1,257 @@
+{% extends 'master_union.html' %}
+
+
+{% block content %}
+
+
+																																														<!-- page content -->
+																																														<div>
+																																														        <div class="row wrapper border-bottom white-bg page-heading">
+																																														            <div class="col-lg-10">
+																																														                <h2>Target Year</h2>
+																																														            </div>
+																																														            <div class="col-lg-2">
+
+																																														            </div>
+																																														        </div>
+																																														<!-- For table copy from here-->
+																																														    <div>
+																																														      <div class="wrapper wrapper-content animated fadeInRight">
+																																														        <div class="row">
+																																														            <div class="col-lg-12">
+																																														            <div class="ibox float-e-margins">
+																																														                <div class="ibox-title">
+																																														                    <h5>Target WM Procurement </h5>
+																																														                    <div class="ibox-tools">
+																																														                        <a class="collapse-link">
+																																														                            <i class="fa fa-chevron-up"></i>
+																																														                        </a>
+
+																																														                        <a class="close-link">
+																																														                            <i class="fa fa-times"></i>
+																																														                        </a>
+																																														                    </div>
+																																														                </div>
+																																														                <div class="ibox-content">
+
+																																														                    <div class="table-responsive">
+																																														                <table class="table table-striped table-bordered table-hover dataTables-example" >
+
+																																																							 <thead>
+																																																								 <tr>
+																																																									 <th>Diary</th>
+																																																									 <th>Month</th>
+																																																									 <th>Procurement</th>
+																																																									 <th>Growth Factor</th>
+																																																									 <th>Target Procurement</th>
+
+																																																								 </tr>
+																																																							 </thead>
+																																																							 <tbody>
+																																																								 {% for item in targetWMProcurement %}
+
+																																																									<tr>
+
+																																																									<td>{{item.diary.name}}</td>
+																																																									<td>{{item.get_month_display}}</td>
+																																																									<td>{{item.procurement}}</td>
+																																																									<td>{{item.growthFactor}}</td>
+																																																									<td>{{item.targetProcurement}}</td>
+																																																									</tr>
+																																																									{%endfor%}
+
+																																																							 </tbody>
+																																																						 </table>
+																																														                    </div>
+
+																																														                </div>
+																																														            </div>
+																																														        </div>
+																																														        </div>
+																																														      </div>
+																																														    </div>
+<!-- target wm procurement table ends here-->
+
+<div>
+	<div class="wrapper wrapper-content animated fadeInRight">
+		<div class="row">
+				<div class="col-lg-12">
+				<div class="ibox float-e-margins">
+						<div class="ibox-title">
+								<h5>Target Sales </h5>
+								<div class="ibox-tools">
+										<a class="collapse-link">
+												<i class="fa fa-chevron-up"></i>
+										</a>
+
+										<a class="close-link">
+												<i class="fa fa-times"></i>
+										</a>
+								</div>
+						</div>
+						<div class="ibox-content">
+
+								<div class="table-responsive">
+						<table class="table table-striped table-bordered table-hover dataTables-example" >
+
+						 	 <thead>
+						 		 <tr>
+						 			 <th>Diary</th>
+						 			 <th>Month</th>
+						 			 <th>Product</th>
+						 			 <th>Sales</th>
+						 			 <th>Growth Factor</th>
+						 			 <th>Target Sales</th>
+
+						 		 </tr>
+						 	 </thead>
+
+
+						 	 <tbody>
+						 		 {% for item in actualProductSales %}
+						 		 <tr>
+						 		 <td>{{item.diary.name}}</td>
+						 		 <td>{{item.get_month_display}}</td>
+						 		 <td>{{item.product}}</td>
+						 				 <td>{{item.sales}}</td>
+						 				 <td>{{item.growthFactor}}</td>
+						 				 <td>{{item.targetSalesQuantity}}</td>
+						 		 </tr>
+						 		 {%endfor%}
+
+						 	 </tbody>
+						  </table>
+								</div>
+
+						</div>
+				</div>
+		</div>
+		</div>
+	</div>
+</div>
+<!-- target sales table ends here-->
+
+<div>
+	<div class="wrapper wrapper-content animated fadeInRight">
+		<div class="row">
+				<div class="col-lg-12">
+				<div class="ibox float-e-margins">
+						<div class="ibox-title">
+								<h5>Target Stock In</h5>
+								<div class="ibox-tools">
+										<a class="collapse-link">
+												<i class="fa fa-chevron-up"></i>
+										</a>
+
+										<a class="close-link">
+												<i class="fa fa-times"></i>
+										</a>
+								</div>
+						</div>
+						<div class="ibox-content">
+
+								<div class="table-responsive">
+						<table class="table table-striped table-bordered table-hover dataTables-example" >
+
+																				                      <thead>
+																				                        <tr>
+																				                          <th>Month</th>
+																				                          <th>From Diary</th>
+																																	<th>To Diary</th>
+																				                          <th>Product</th>
+																				                          <th>Quantity</th>
+																				                          <th>Growth Factor</th>
+																				                          <th>Target Stock In</th>
+
+																				                        </tr>
+																				                      </thead>
+
+
+																				                      <tbody>
+																																{% for item in actualProductStockIn %}
+																							                  <tr>
+																							                  <td>{{item.get_month_display}}</td>
+																							                  <td>{{item.from_diary.name}}</td>
+																							                  <td>{{item.diary.name}}</td>
+
+																							                  <td>{{item.product}}</td>
+																							                  <td>{{item.quantity}}</td>
+																							                  <td>{{item.growthFactorStockin}}</td>
+																							                  <td>{{item.targetStockinQuantity}}</td>
+																							                  </tr>
+																							                  {%endfor%}
+
+																				                      </tbody>
+																				                    </table>
+								</div>
+
+						</div>
+				</div>
+		</div>
+		</div>
+	</div>
+</div>
+<!--target stock in table ends here-->
+<div>
+	<div class="wrapper wrapper-content animated fadeInRight">
+		<div class="row">
+				<div class="col-lg-12">
+				<div class="ibox float-e-margins">
+						<div class="ibox-title">
+								<h5>Target Stock Out</h5>
+								<div class="ibox-tools">
+										<a class="collapse-link">
+												<i class="fa fa-chevron-up"></i>
+										</a>
+
+										<a class="close-link">
+												<i class="fa fa-times"></i>
+										</a>
+								</div>
+						</div>
+						<div class="ibox-content">
+
+								<div class="table-responsive">
+						<table class="table table-striped table-bordered table-hover dataTables-example" >
+
+																		                      <thead>
+																		                        <tr>
+																															<th>Month</th>
+																															<th>From Diary</th>
+																															<th>To Diary</th>
+																															<th>Product</th>
+																															<th>Quantity</th>
+																															<th>Growth Factor</th>
+																															<th>Target Stock Out</th>
+																		                        </tr>
+																		                      </thead>
+
+
+																		                      <tbody>
+																														{% for item in actualProductStockOut %}
+																							              <tr>
+																							              <td>{{item.get_month_display}}</td>
+																							              <td>{{item.from_diary.name}}</td>
+																							              <td>{{item.diary.name}}</td>
+																							              <td>{{item.product}}</td>
+																							              <td>{{item.quantity}}</td>
+																							              <td>{{item.growthFactorStockout}}</td>
+																							              <td>{{item.targetStockOutQuantity}}</td>
+																							              </tr>
+																							              {%endfor%}
+
+																		                      </tbody>
+																		                    </table>
+								</div>
+
+						</div>
+				</div>
+		</div>
+		</div>
+	</div>
+</div>
+
+<!--target stockout table ends here-->
+
+																					</div>
+{% endblock %}
