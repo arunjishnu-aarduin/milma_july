@@ -6,8 +6,8 @@ $(document).ready(function(){
         buttons: [
             { extend: 'copy'},
             {extend: 'csv'},
-            {extend: 'excel', title: 'ExampleFile'},
-            {extend: 'pdf', title: 'ExampleFile'},
+            {extend: 'excel'},
+            {extend: 'pdf'},
 
             {extend: 'print',
              customize: function (win){
@@ -16,7 +16,13 @@ $(document).ready(function(){
 
                     $(win.document.body).find('table')
                             .addClass('compact')
-                            .css('font-size', 'inherit');
+                            .css('font-size', 'inherit')
+                            .prepend(
+                           '<img src="http://www.malabarmilma.com/images/milma_logo.jpg" style="position:absolute; top:0; left:0;" />'
+                       )
+
+                            ;
+
             }
             }
         ]

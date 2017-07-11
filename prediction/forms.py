@@ -102,7 +102,13 @@ class IssueRequirementFormBasic(forms.Form):
     #month=forms.ChoiceField(choices=MONTHS.items())
     Issue_Choice=Issue.objects.filter(type='3').exclude(name__in=['ADA','SUGAR'])
     issue=forms.ChoiceField(choices=( (x.id, x.name) for x in Issue_Choice ))
-    
+class IssueRequirementFormBasicUnion(forms.ModelForm):
+        #month=forms.ChoiceField(choices=MONTHS.items())
+    Issue_Choice=Issue.objects.filter(type='3').exclude(name__in=['ADA','SUGAR'])
+    issue=forms.ChoiceField(choices=( (x.id, x.name) for x in Issue_Choice ))
+    class Meta:
+        model=ProcurementGrowthFactor
+        fields=('diary','issue',)
 
 class IssueRequirementFormUnion(forms.ModelForm):
 

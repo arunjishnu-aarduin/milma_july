@@ -95,12 +95,7 @@ $(document).ready(function () {
         return false;
     });
 
-    // Append config box / Only for demo purpose
-    // Uncomment on server mode to enable XHR calls
-    $.get("skin-config.html", function (data) {
-        if (!$('body').hasClass('no-skin-config'))
-            $('body').append(data);
-    });
+
 
     // Minimalize menu
     $('.navbar-minimalize').on('click', function () {
@@ -109,11 +104,6 @@ $(document).ready(function () {
 
     });
 
-    // Tooltips demo
-    $('.tooltip-demo').tooltip({
-        selector: "[data-toggle=tooltip]",
-        container: "body"
-    });
 
 
     // Full height of sidebar
@@ -242,20 +232,7 @@ function localStorageSupport() {
     return (('localStorage' in window) && window['localStorage'] !== null)
 }
 
-// For demo purpose - animation css script
-function animationHover(element, animation) {
-    element = $(element);
-    element.hover(
-        function () {
-            element.addClass('animated ' + animation);
-        },
-        function () {
-            //wait for animation to finish before removing classes
-            window.setTimeout(function () {
-                element.removeClass('animated ' + animation);
-            }, 2000);
-        });
-}
+
 
 function SmoothlyMenu() {
     if (!$('body').hasClass('mini-navbar') || $('body').hasClass('body-small')) {
@@ -293,5 +270,3 @@ function WinMove() {
         })
         .disableSelection();
 }
-
-

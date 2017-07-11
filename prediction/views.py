@@ -135,7 +135,8 @@ def issuerequirement(request):
         form = IssueRequirementForm()
     #return render(request, 'prediction/issue_requirement.html', {'form': form})
     return render(request, 'prediction/IssueWise.html', {'form': form})
-
+@login_required
+@user_passes_test(group_check_diary)
 def basicRequirement(request):
     if request.method == "POST":
         form = IssueRequirementFormBasic(request.POST)
@@ -189,6 +190,131 @@ def basicRequirement(request):
         form = IssueRequirementFormBasic()
     #return render(request, 'prediction/issue_requirement.html', {'form': form})
     return render(request, 'prediction/IssueWiseBasic.html', {'form': form})
+@login_required
+@user_passes_test(group_check_union)
+def basicRequirementUnion(request):
+    if request.method == "POST":
+        form = IssueRequirementFormBasic(request.POST)
+
+        if form.is_valid():
+            issue_id=form.cleaned_data["issue"]
+
+            issue=Issue.objects.get(id=issue_id)
+
+
+
+            total_requirement_union={}
+
+            for month in MONTHS.items():
+                print month[1]
+                diary_list=Diary.objects.all()
+                for diary in diary_list:
+
+                    ret_month,month_issue_requirement=totalIssueRequirement(month[0],diary,issue)
+                    month_requirement_for_milk_issue_production=0
+                    type2_issue_list=Issue.objects.filter(type='2')
+                    for issue_item in type2_issue_list:
+                        issue_ret_month,month_issue_requirement=totalIssueRequirement(month[0],diary,issue_item)
+
+                        composition_ratio_derived=0
+                        if issue.name=="CREAM":
+                            try:
+                                composition_ratio_derived=qcValue(issue_item)/(qcValue(issue_item)+qwmValue(issue_item)+qsmpValue(issue_item))
+                            except Exception as e:
+                                print "Exception handled in line no 224"
+
+                        elif issue.name=="WM":
+                            try:
+                                composition_ratio_derived=qwmValue(issue_item)/(qcValue(issue_item)+qwmValue(issue_item)+qsmpValue(issue_item))
+                            except Exception as e:
+                                print "Exception handled in line no 230"
+
+
+                        elif issue.name=="SMP":
+                            try:
+                                composition_ratio_derived=qsmpValue(issue_item)/(qcValue(issue_item)+qwmValue(issue_item)+qsmpValue(issue_item))
+                            except Exception as e:
+                                print "Exception handled in line no 237"
+
+
+                        requirement_to_produce_milk_issue=month_issue_requirement*composition_ratio_derived
+                        month_requirement_for_milk_issue_production+=requirement_to_produce_milk_issue
+                    total_month_requirement=month_requirement_for_milk_issue_production + month_issue_requirement
+                    total_requirement_union[month[1]]=total_month_requirement
+
+
+
+
+
+            return render(request, "prediction/IssueWiseBasicUnion.html",{"total_requirement_union":total_requirement_union,'form':form})
+
+
+    else:
+        form = IssueRequirementFormBasic()
+
+
+    #return render(request, 'prediction/issue_requirement.html', {'form': form})
+    return render(request, 'prediction/IssueWiseBasicUnion.html', {'form': form})
+@login_required
+@user_passes_test(group_check_union)
+def basicRequirementUnionDiaryWise(request):
+    if request.method == "POST":
+
+        form_union = IssueRequirementFormBasicUnion(request.POST)
+        if form_union.is_valid():
+            issue_id=form_union.cleaned_data["issue"]
+
+            issue=Issue.objects.get(id=issue_id)
+
+            diary=form_union.cleaned_data["diary"]
+
+            total_requirement={}
+
+            for month in MONTHS.items():
+
+                print month[1]
+                ret_month,month_issue_requirement=totalIssueRequirement(month[0],diary,issue)
+                month_requirement_for_milk_issue_production=0
+                type2_issue_list=Issue.objects.filter(type='2')
+                for issue_item in type2_issue_list:
+                    issue_ret_month,month_issue_requirement=totalIssueRequirement(month[0],diary,issue_item)
+
+                    composition_ratio_derived=0
+                    if issue.name=="CREAM":
+                        try:
+                            composition_ratio_derived=qcValue(issue_item)/(qcValue(issue_item)+qwmValue(issue_item)+qsmpValue(issue_item))
+                        except Exception as e:
+                            print "Exception handled in line no 270"
+
+                    elif issue.name=="WM":
+                        try:
+                            composition_ratio_derived=qwmValue(issue_item)/(qcValue(issue_item)+qwmValue(issue_item)+qsmpValue(issue_item))
+                        except Exception as e:
+                            print "Exception handled in line no 276"
+
+
+                    elif issue.name=="SMP":
+                        try:
+                            composition_ratio_derived=qsmpValue(issue_item)/(qcValue(issue_item)+qwmValue(issue_item)+qsmpValue(issue_item))
+                        except Exception as e:
+                             print "Exception handled in line no 283"
+
+
+                    requirement_to_produce_milk_issue=month_issue_requirement*composition_ratio_derived
+                    month_requirement_for_milk_issue_production+=requirement_to_produce_milk_issue
+                total_month_requirement=month_requirement_for_milk_issue_production + month_issue_requirement
+                total_requirement[month[1]]=total_month_requirement
+
+            return render(request, "prediction/IssueWiseBasicUnionDiaryWise.html",{"issue_monthwise":total_requirement,'form_union':form_union})
+
+
+    else:
+
+        form_union = IssueRequirementFormBasicUnion()
+
+    #return render(request, 'prediction/issue_requirement.html', {'form': form})
+    return render(request, 'prediction/IssueWiseBasicUnionDiaryWise.html', {'form_union':form_union})
+
 
 
 @login_required
