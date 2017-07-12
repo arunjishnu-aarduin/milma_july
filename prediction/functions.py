@@ -163,7 +163,7 @@ def qcValue(milk_product):
         fwm=Issue.objects.get(name='WM').fat
         mf=milk_product.fat
 
-        qc=(fwm*((fc+fwm)/100)-mf*(fc+fwm))/((2*mf)-(fwm/100)-(fc/100))
+        qc=(fwm*((fc-fwm)/100)-(mf*(fc-fwm)))/((2*mf)-(fwm/100)-(fc/100))
         return qc
     except Exception as e:
         print "Exception handled from qcValue Function"

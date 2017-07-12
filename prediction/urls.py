@@ -24,6 +24,8 @@ urlpatterns=[
     url(r'^issueNew/',views.issueNew,name='issueNew'),
     url(r'^compositionNew/',views.compositionNew,name='compositionNew'),
     url(r'^methodpercentageNew/',views.methodpercentageNew,name='methodpercentageNew'),
+    url(r'^fatPercentageYield/',views.fatPercentageYield,name='fatPercentageYield'),
+    
     url(r'^issueascategoryNew/',views.issueascategoryNew,name='issueascategoryNew'),
     url(r'^targetYear/',views.targetYear,name='targetYear'),
     url(r'^targetYearUnion/',views.targetYearUnion,name='targetYearUnion'),

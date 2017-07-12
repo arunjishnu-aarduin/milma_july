@@ -323,6 +323,17 @@ def variantNew(request):
     variantList=Variant.objects.all().order_by('name')
     if request.method == "POST":
         form = VariantForm(request.POST)
+        if request.POST.get('delete',False):
+
+            if form.is_valid():
+
+                try:
+                    Variant.objects.get(name=form.cleaned_data["name"],unit=form.cleaned_data["unit"]).delete()
+                    messages.info(request, "Successfully Deleted")
+                except Exception as e:
+                    messages.info(request, "Deletion Failed:Not Exist")
+
+            return redirect(variantNew)
         if form.is_valid():
             variant = form.save(commit=False)
             variant.save()
@@ -349,9 +360,28 @@ def productNew(request):
     productList=Product.objects.all().order_by('code')
     if request.method == "POST":
         form = ProductForm(request.POST)
-        if form.is_valid():
+        if request.POST.get('delete',False):
+            if form.is_valid():
+
+                try:
+                    Product.objects.get(code=form.cleaned_data["code"],category=form.cleaned_data["category"],variant=form.cleaned_data["variant"]).delete()
+                    messages.info(request, "Successfully Deleted")
+                except Exception as e:
+                    messages.info(request, "Deletion Failed:Not Exist")
+
+            return redirect(productNew)
+
+        """if form.is_valid():
             product=form.save(commit=False)
-            product.save()
+            product.save()"""
+        if form.is_valid():
+            data = form.cleaned_data
+            obj, created = Product.objects.update_or_create(
+                    code=data['code'],category=data['category'],variant=data["variant"],
+                    defaults={'rate':data['rate']},
+
+                )
+
             return redirect(productNew)
     else:
         form=ProductForm()
@@ -374,9 +404,28 @@ def compositionNew(request):
     compositionList=Composition.objects.all().order_by('category')
     if request.method == "POST":
         form = CompositionForm(request.POST)
-        if form.is_valid():
+        if request.POST.get('delete',False):
+
+            if form.is_valid():
+
+                try:
+                    Composition.objects.get(category=form.cleaned_data["category"],method=form.cleaned_data["method"],issue=form.cleaned_data["issue"]).delete()
+                    messages.info(request, "Successfully Deleted")
+                except Exception as e:
+                    messages.info(request, "Deletion Failed:Not Exist")
+
+            return redirect(compositionNew)
+
+        """if form.is_valid():
             composition=form.save(commit=False)
-            composition.save()
+            composition.save()"""
+        if form.is_valid():
+            data = form.cleaned_data
+            obj, created = Composition.objects.update_or_create(
+                    method=data['method'],category=data['category'],issue=data["issue"],
+                    defaults={'ratio':data['ratio']},
+
+                )
             return redirect(compositionNew)
     else:
         form=CompositionForm()
@@ -387,13 +436,69 @@ def methodpercentageNew(request):
     method_percentage_List=MethodPercentage.objects.all().order_by('category')
     if request.method == "POST":
         form = MethodPercentageForm(request.POST)
-        if form.is_valid():
+
+        if request.POST.get('delete',False):
+
+            if form.is_valid():
+                try:
+
+                    MethodPercentage.objects.get(category=form.cleaned_data["category"],method=form.cleaned_data["method"]).delete()
+                    messages.info(request, "Successfully Deleted")
+                except Exception as e:
+                    messages.info(request, "Deletion Failed:Not Exist")
+
+            return redirect(methodpercentageNew)
+
+        """if form.is_valid():
             method_percentage=form.save(commit=False)
             method_percentage.save()
-            return redirect(methodpercentageNew)
+            return redirect(methodpercentageNew)"""
+        if form.is_valid():
+            data = form.cleaned_data
+            obj, created = MethodPercentage.objects.update_or_create(
+                    method=data['method'],category=data['category'],
+                    defaults={'percentage':data['percentage']},
+
+                )
+            return redirect("methodpercentageNew")
     else:
         form=MethodPercentageForm()
     return render(request,'prediction/MethodPercentage.html',{'form':form,'method_percentage_List':method_percentage_List})
+
+@login_required
+@user_passes_test(group_check_union)
+def fatPercentageYield(request):
+    fat_percentage_yield_List=FatPercentageYield.objects.all().order_by('category')
+    if request.method == "POST":
+        form = FatPercentageYieldForm(request.POST)
+
+        if request.POST.get('delete',False):
+
+            if form.is_valid():
+                try:
+
+                    FatPercentageYield.objects.get(category=form.cleaned_data["category"],issue=form.cleaned_data["issue"],method=form.cleaned_data["method"]).delete()
+                    messages.info(request, "Successfully Deleted")
+                except Exception as e:
+                    messages.info(request, "Deletion Failed:Not Exist")
+
+            return redirect(fatPercentageYield)
+
+        """if form.is_valid():
+            method_percentage=form.save(commit=False)
+            method_percentage.save()
+            return redirect(methodpercentageNew)"""
+        if form.is_valid():
+            data = form.cleaned_data
+            obj, created = FatPercentageYield.objects.update_or_create(
+                    method=data['method'],category=data['category'],issue=data['issue'],
+                    defaults={'percentage':data['percentage']},
+
+                )
+            return redirect(fatPercentageYield)
+    else:
+        form=FatPercentageYieldForm()
+    return render(request,'prediction/FatPercentageYield.html',{'form':form,'fat_percentage_yield_List':fat_percentage_yield_List})
 
 def issueascategoryNew(request):
     if request.method == "POST":
@@ -433,10 +538,54 @@ def growthFactorEntry(request):
     diary=diary_of_user(request.user)
     productGrowthFactor=ProductCategoryGrowthFactor.objects.filter(diary=diary).order_by('month','category')
     procurementGrowthFactor=ProcurementGrowthFactor.objects.filter(diary=diary).order_by('month','diary')
+
+        #return HttpResponse('delete')
+        #print "hello"
+
     if request.method == "POST":
         form = ProductCategoryGrowthFactorForm(request.POST)
         form_procurement=ProcurementGrowthFactorForm(request.POST)
+        if request.POST.get('delete',False):
+
+            if form_procurement.is_valid():
+                try:
+                    ProcurementGrowthFactor.objects.get(month=form_procurement.cleaned_data["month"],diary=diary).delete()
+                    messages.info(request, "Successfully Deleted")
+                except Exception as e:
+                    messages.info(request, "Deletion Failed:Not Exist")
+            return redirect("/growthFactorEntry/#procurement")
+
+
+        if request.POST.get('delete_product_growth_factor',False):
+
+            if form.is_valid():
+                try:
+                    ProductCategoryGrowthFactor.objects.get(month=form.cleaned_data["month"],diary=diary,category=form.cleaned_data["category"]).delete()
+                    messages.info(request, "Successfully Deleted")
+                except Exception as e:
+                    messages.info(request, "Deletion Failed:Not Exist")
+
+            return redirect("/growthFactorEntry/#product")
+
+
         if form.is_valid():
+            data = form.cleaned_data
+            obj, created = ProductCategoryGrowthFactor.objects.update_or_create(
+                    diary=diary,month=data['month'],category=data['category'],
+                    defaults={'growth_factor':data['growth_factor']},
+
+                )
+            return redirect("/growthFactorEntry/#product")
+        if form_procurement.is_valid():
+            data = form_procurement.cleaned_data
+            obj, created = ProcurementGrowthFactor.objects.update_or_create(
+                    diary=diary,month=data['month'],
+                    defaults={'growth_factor':data['growth_factor']},
+
+                )
+            return redirect("/growthFactorEntry/#procurement")
+        """if form.is_valid():
+
             try:
                 product_category_growth_factor=form.save(commit=False)
                 product_category_growth_factor.diary=diary
@@ -448,6 +597,7 @@ def growthFactorEntry(request):
 
 
         if form_procurement.is_valid():
+
             try:
                 procurement_growth_factor=form_procurement.save(commit=False)
                 procurement_growth_factor.diary=diary
@@ -455,8 +605,9 @@ def growthFactorEntry(request):
 
             except Exception as e:
                 print "Procurement growth factor with this Month and Diary already exists."
+                """
+        #return redirect(growthFactorEntry)
 
-        return redirect(growthFactorEntry)
 
             #return HttpResponseRedirect(request,'prediction/GrowthFactorEntry.html',{'form_procurement':form_procurement,'procurementGrowthFactor':procurementGrowthFactor})
     else:
@@ -475,25 +626,73 @@ def growthFactorEntryUnion(request):
     if request.method == "POST":
         form = ProductCategoryGrowthFactorFormUnion(request.POST)
         form_procurement=ProcurementGrowthFactorFormUnion(request.POST)
+        if request.POST.get('delete',False):
+
+            if form_procurement.is_valid():
+                try:
+                    ProcurementGrowthFactor.objects.get(month=form_procurement.cleaned_data["month"],diary=form_procurement.cleaned_data["diary"]).delete()
+                    messages.info(request, "Successfully Deleted")
+                except Exception as e:
+                    messages.info(request, "Deletion Failed:Not Exist")
+            return redirect("/growthFactorEntryUnion/#procurement")
+
+
+        if request.POST.get('delete_product_growth_factor',False):
+
+            if form.is_valid():
+                try:
+                    ProductCategoryGrowthFactor.objects.get(month=form.cleaned_data["month"],diary=form.cleaned_data["diary"],category=form.cleaned_data["category"]).delete()
+                    messages.info(request, "Successfully Deleted")
+                except Exception as e:
+                    messages.info(request, "Deletion Failed:Not Exist")
+
+            return redirect("/growthFactorEntryUnion/#product")
+
+
         if form.is_valid():
-            try:
-                product_category_growth_factor=form.save(commit=False)
-                product_category_growth_factor.save()
-                #return HttpResponseRedirect(request,'prediction/GrowthFactorEntry.html',{'form':form,'productGrowthFactor':productGrowthFactor})
+            data = form.cleaned_data
+            obj, created = ProductCategoryGrowthFactor.objects.update_or_create(
+                    diary=data['diary'],month=data['month'],category=data['category'],
+                    defaults={'growth_factor':data['growth_factor']},
 
-            except Exception as e:
-                print "Product growth factor with this Month and Diary already exists."
-
-
+                )
+            return redirect("/growthFactorEntryUnion/#product")
         if form_procurement.is_valid():
+            data = form_procurement.cleaned_data
+
+            obj, created = ProcurementGrowthFactor.objects.update_or_create(
+                    diary=data['diary'],month=data['month'],
+                    defaults={'growth_factor':data['growth_factor']},
+
+                )
+            return redirect("/growthFactorEntryUnion/#procurement")
+            """
             try:
+                #product_category_growth_factor=form.save(commit=False)
+
+                product_category_growth_factor_obj= ProductCategoryGrowthFactor.objects.get(diary=data['diary'],month=data['month'],category=data['category'])
+                #print product_category_growth_factor_obj
+                product_category_growth_factor_obj.growth_factor=data['growth_factor']
+                product_category_growth_factor_obj.save()
+                #return HttpResponseRedirect(request,'prediction/GrowthFactorEntry.html',{'form':form,'productGrowthFactor':productGrowthFactor})
+                print 'updated'
+            except Exception as e:
+                product_category_growth_factor_obj= ProductCategoryGrowthFactor(diary=data['diary'],month=data['month'],category=data['category'],growth_factor=data['growth_factor'])
+                product_category_growth_factor_obj.save()
+                print "created"
+                #print " 490 Product growth factor with this Month and Diary already exists.",e
+            """
+
+
+            """try:
                 procurement_growth_factor=form_procurement.save(commit=False)
                 procurement_growth_factor.save()
 
             except Exception as e:
-                print "Procurement growth factor with this Month and Diary already exists."
+                print "499 Procurement growth factor with this Month and Diary already exists."
+                """
 
-        return redirect(growthFactorEntryUnion)
+        #return redirect(growthFactorEntryUnion)
 
             #return HttpResponseRedirect(request,'prediction/GrowthFactorEntry.html',{'form_procurement':form_procurement,'procurementGrowthFactor':procurementGrowthFactor})
     else:
@@ -510,6 +709,19 @@ def productConfiguration(request):
     productConfigurationList=ProductConfiguration.objects.all().order_by('diary')
     if request.method == "POST":
         form = ProductConfigurationForm(request.POST)
+        if request.POST.get('delete',False):
+
+            if form.is_valid():
+
+                try:
+                    ProductConfiguration.objects.get(product=form.cleaned_data["product"],diary=form.cleaned_data["diary"]).delete()
+                    messages.info(request, "Successfully Deleted")
+                except Exception as e:
+                    messages.info(request, "Deletion Failed:Not Exist")
+
+            return redirect(productConfiguration)
+
+
         if form.is_valid():
             product_configuration=form.save(commit=False)
             product_configuration.save()
@@ -527,9 +739,73 @@ def actualYearEntry(request):
     ActualStockoutList=ActualStockin.objects.filter(from_diary=diary).order_by('month')
     if request.method == "POST":
         form = ActualWMProcurementForm(request.POST)
-        form_sale = ActualSaleForm(request.POST)
-        form_stockin=ActualStockinForm(request.POST)
+
+        if request.POST.get('delete',False):
+
+            if form.is_valid():
+
+                try:
+                    ActualWMProcurement.objects.get(diary=diary,month=form.cleaned_data["month"]).delete()
+                    messages.info(request, "Successfully Deleted")
+                except Exception as e:
+                    messages.info(request, "Deletion Failed:Not Exist")
+
+            return redirect("/actualYearEntry/#actualwmprocurement")
+
         if form.is_valid():
+            data = form.cleaned_data
+            obj, created = ActualWMProcurement.objects.update_or_create(
+                    diary=diary,month=data['month'],
+                    defaults={'procurement':data['procurement']},
+
+                )
+            return redirect("/actualYearEntry/#actualwmprocurement")
+
+        form_sale = ActualSaleForm(request.POST)
+        if request.POST.get('delete_sale',False):
+
+            if form_sale.is_valid():
+
+                try:
+                    ActualSale.objects.get(diary=diary,month=form_sale.cleaned_data["month"],product=form_sale.cleaned_data["product"]).delete()
+                    messages.info(request, "Successfully Deleted")
+                except Exception as e:
+                    messages.info(request, "Deletion Failed:Not Exist")
+
+            return redirect("/actualYearEntry/#actualsale")
+        if form_sale.is_valid():
+            data = form_sale.cleaned_data
+            obj, created = ActualSale.objects.update_or_create(
+                    diary=diary,month=data['month'],product=data["product"],
+                    defaults={'sales':data['sales']},
+
+                )
+            return redirect("/actualYearEntry/#actualsale")
+
+
+
+        form_stockin=ActualStockinForm(request.POST)
+        if request.POST.get('delete_stockin',False):
+
+            if form_stockin.is_valid():
+
+                try:
+                    ActualStockin.objects.get(diary=diary,from_diary=form_stockin.cleaned_data["from_diary"],month=form_stockin.cleaned_data["month"],product=form_stockin.cleaned_data["product"]).delete()
+                    messages.info(request, "Successfully Deleted")
+                except Exception as e:
+                    messages.info(request, "Deletion Failed:Not Exist")
+
+            return redirect("/actualYearEntry/#actualstockin")
+        if form_stockin.is_valid():
+            data = form_stockin.cleaned_data
+            obj, created = ActualStockin.objects.update_or_create(
+                    diary=diary,from_diary=data['from_diary'],month=data['month'],product=data["product"],
+                    defaults={'quantity':data['quantity']},
+
+                )
+            return redirect("/actualYearEntry/#actualstockin")
+
+        """if form.is_valid():
             actual_wm_procurement=form.save(commit=False)
             actual_wm_procurement.diary=diary
             actual_wm_procurement.save()
@@ -543,7 +819,7 @@ def actualYearEntry(request):
             actual_stock_in=form_stockin.save(commit=False)
             actual_stock_in.diary=diary
             actual_stock_in.save()
-        return redirect(actualYearEntry)
+        return redirect(actualYearEntry)"""
 
     else:
         form=ActualWMProcurementForm()
@@ -562,6 +838,75 @@ def actualYearEntryUnion(request):
     ActualStockoutList=ActualStockin.objects.all().order_by('month')
     if request.method == "POST":
         form = ActualWMProcurementFormUnion(request.POST)
+
+        if request.POST.get('delete',False):
+
+            if form.is_valid():
+
+                try:
+                    ActualWMProcurement.objects.get(diary=form.cleaned_data["diary"],month=form.cleaned_data["month"]).delete()
+                    messages.info(request, "Successfully Deleted")
+                except Exception as e:
+                    messages.info(request, "Deletion Failed:Not Exist")
+
+            return redirect("/actualYearEntryUnion/#actualwmprocurement")
+
+        if form.is_valid():
+            data = form.cleaned_data
+            obj, created = ActualWMProcurement.objects.update_or_create(
+                    diary=data["diary"],month=data['month'],
+                    defaults={'procurement':data['procurement']},
+
+                )
+            return redirect("/actualYearEntryUnion/#actualwmprocurement")
+
+        form_sale = ActualSaleFormUnion(request.POST)
+        if request.POST.get('delete_sale',False):
+
+            if form_sale.is_valid():
+
+                try:
+                    ActualSale.objects.get(diary=form_sale.cleaned_data["diary"],month=form_sale.cleaned_data["month"],product=form_sale.cleaned_data["product"]).delete()
+                    messages.info(request, "Successfully Deleted")
+                except Exception as e:
+                    messages.info(request, "Deletion Failed:Not Exist")
+
+            return redirect("/actualYearEntryUnion/#actualsale")
+        if form_sale.is_valid():
+            print "save"
+            data = form_sale.cleaned_data
+            obj, created = ActualSale.objects.update_or_create(
+                    diary=data['diary'],month=data['month'],product=data["product"],
+                    defaults={'sales':data['sales']},
+
+                )
+            return redirect("/actualYearEntryUnion/#actualsale")
+
+
+
+        form_stockin=ActualStockinFormUnion(request.POST)
+        if request.POST.get('delete_stockin',False):
+
+            if form_stockin.is_valid():
+
+                try:
+                    ActualStockin.objects.get(diary=form_stockin.cleaned_data["diary"],from_diary=form_stockin.cleaned_data["from_diary"],month=form_stockin.cleaned_data["month"],product=form_stockin.cleaned_data["product"]).delete()
+                    messages.info(request, "Successfully Deleted")
+                except Exception as e:
+                    messages.info(request, "Deletion Failed:Not Exist")
+
+            return redirect("/actualYearEntryUnion/#actualstockin")
+        if form_stockin.is_valid():
+            data = form_stockin.cleaned_data
+            obj, created = ActualStockin.objects.update_or_create(
+                    diary=data['diary'],from_diary=data['from_diary'],month=data['month'],product=data["product"],
+                    defaults={'quantity':data['quantity']},
+
+                )
+            return redirect("/actualYearEntryUnion/#actualstockin")
+
+        """
+        form = ActualWMProcurementFormUnion(request.POST)
         form_sale = ActualSaleFormUnion(request.POST)
         form_stockin=ActualStockinFormUnion(request.POST)
         if form.is_valid():
@@ -576,7 +921,7 @@ def actualYearEntryUnion(request):
         if form_stockin.is_valid():
             actual_stock_in=form_stockin.save(commit=False)
             actual_stock_in.save()
-        return redirect(actualYearEntryUnion)
+        return redirect(actualYearEntryUnion)"""
 
     else:
         form=ActualWMProcurementFormUnion()
@@ -591,9 +936,9 @@ def actualYearEntryUnion(request):
 def home(request):
 
     if request.user.groups.filter(name="Diary").exists():
-        return redirect(growthFactorEntry)
+        return redirect(targetYear)
     else:
-        return redirect(variantNew)
+        return redirect(targetYearUnion)
 @login_required
 @user_passes_test(group_check_diary)
 def rawmaterialWise(request):

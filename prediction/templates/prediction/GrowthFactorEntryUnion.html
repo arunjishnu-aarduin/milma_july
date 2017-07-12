@@ -61,6 +61,7 @@
                                                          <form method="POST" >{% csrf_token %}
  																														{{ form_procurement.as_table }}
  																														<button type="submit" class="save btn btn-default">Save</button>
+                                                            <input type="submit" name="delete" class="save btn btn-default" value="Delete" ></input>
  																												</form>
                     </div>
 
@@ -117,6 +118,7 @@
             <form method="POST" >{% csrf_token %}
                 {{ form.as_table }}
                 <button type="submit" class="save btn btn-default">Save</button>
+                <input type="submit" name="delete_product_growth_factor" class="save btn btn-default" value="Delete" ></input>
             </form>
                 </div>
 

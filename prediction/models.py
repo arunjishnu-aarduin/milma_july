@@ -48,7 +48,7 @@ class Diary(models.Model):
     name=models.CharField(max_length=50)
 
     def __str__(self):
-        return self.id+"-"+self.name
+        return self.name
 class Variant(models.Model):
     name=models.CharField(max_length=50)
     unit=models.PositiveSmallIntegerField()
@@ -67,7 +67,7 @@ class Category(models.Model):
         return method_list
 
     def __str__(self):
-        return self.code+"-"+self.name
+        return self.name
 
 class Product(models.Model):
     code=models.DecimalField(max_digits=5,decimal_places=0,validators=[validate_positive],primary_key=True)
@@ -89,7 +89,7 @@ class Issue(models.Model):
     type=models.CharField(max_length=1,choices=ISSUE_CHOICES)
 
     def __str__(self):
-        return self.id+"-"+self.name
+        return self.name
 class Composition(models.Model):
     category=models.ForeignKey('Category',on_delete=models.CASCADE)
     issue=models.ForeignKey('Issue',on_delete=models.CASCADE)
@@ -153,7 +153,7 @@ class FatPercentageYield(models.Model):
     percentage=models.DecimalField(max_digits=3,decimal_places=0,validators=[validate_positive,MaxValueValidator(100)])
     class Meta:
         unique_together = ('issue', 'category','method',)
-
+    
 
     def save(self, *args, **kwargs):
         super(FatPercentageYield, self).save(*args, **kwargs)
@@ -296,7 +296,7 @@ class ProductConfiguration(models.Model):
     class Meta:
         unique_together = ('product', 'diary',)
     def __str__(self):
-        return self.product.name+"-"+self.diary.name
+        return str(self.product)+"-"+self.diary.name
 
 class ActualWMProcurement(models.Model):
     month=models.PositiveSmallIntegerField(choices=MONTHS.items())

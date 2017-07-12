@@ -15,6 +15,8 @@ class VariantForm(forms.ModelForm):
     class Meta:
         model=Variant
         fields=('name','unit')
+    def validate_unique(self):
+        pass
 
 class CategoryForm(forms.ModelForm):
     class Meta:
@@ -24,7 +26,9 @@ class CategoryForm(forms.ModelForm):
 class ProductForm(forms.ModelForm):
     class Meta:
         model=Product
-        fields=('code','variant','category','rate')
+        fields=('code','category','variant','rate')
+    def validate_unique(self):
+        pass
 
 class IssueForm(forms.ModelForm):
     class Meta:
@@ -35,10 +39,20 @@ class CompositionForm(forms.ModelForm):
     class Meta:
         model=Composition
         fields=('category','issue','ratio','method')
+    def validate_unique(self):
+        pass
 class MethodPercentageForm(forms.ModelForm):
     class Meta:
         model=MethodPercentage
         fields=('category','method','percentage')
+    def validate_unique(self):
+        pass
+class FatPercentageYieldForm(forms.ModelForm):
+    class Meta:
+        model=FatPercentageYield
+        fields=('category','issue','method','percentage')
+    def validate_unique(self):
+        pass
 
 class IssueAsCategoryForm(forms.ModelForm):
     class Meta:
@@ -49,45 +63,64 @@ class ActualSaleForm(forms.ModelForm):
     class Meta:
         model=ActualSale
         fields=('month','product','sales')
+    def validate_unique(self):
+        pass
 class ActualSaleFormUnion(forms.ModelForm):
     class Meta:
         model=ActualSale
-        fields=('month','product','sales','diary')
+        fields=('diary','month','product','sales')
+    def validate_unique(self):
+        pass
 
 class ActualStockinForm(forms.ModelForm):
     class Meta:
         model=ActualStockin
         fields=('month','product','quantity','from_diary')
+    def validate_unique(self):
+        pass
 class ActualStockinFormUnion(forms.ModelForm):
     class Meta:
         model=ActualStockin
         fields=('month','product','quantity','from_diary','diary')
-
+    def validate_unique(self):
+        pass
 class ProductCategoryGrowthFactorForm(forms.ModelForm):
     class Meta:
         model=ProductCategoryGrowthFactor
         fields=('category','growth_factor','month')
+
+
 class ProductCategoryGrowthFactorFormUnion(forms.ModelForm):
     class Meta:
         model=ProductCategoryGrowthFactor
         fields=('category','growth_factor','month','diary')
+    def validate_unique(self):
+        pass
 class ProductConfigurationForm(forms.ModelForm):
     class Meta:
         model=ProductConfiguration
         fields=('product','diary')
+    def validate_unique(self):
+        pass
 class ActualWMProcurementForm(forms.ModelForm):
     class Meta:
         model=ActualWMProcurement
         fields=('month','procurement')
+    def validate_unique(self):
+        pass
 class ActualWMProcurementFormUnion(forms.ModelForm):
     class Meta:
         model=ActualWMProcurement
-        fields=('month','procurement','diary')
+        fields=('diary','month','procurement')
+    def validate_unique(self):
+        pass
 
 class ProcurementGrowthFactorForm(forms.ModelForm):
     class Meta:
         model=ProcurementGrowthFactor
         fields=('month','growth_factor')
+    def validate_unique(self):
+        pass
 class ProcurementGrowthFactorFormUnion(forms.ModelForm):
     class Meta:
         model=ProcurementGrowthFactor

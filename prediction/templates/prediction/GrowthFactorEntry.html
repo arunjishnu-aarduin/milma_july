@@ -30,6 +30,13 @@
                             <i class="fa fa-times"></i>
                         </a>
                     </div>
+                    {% if messages %}
+    <ul class="messages">
+    {% for message in messages %}
+    <li{% if message.tags %} class="{{ message.tags }}"{% endif %}>{{ message }}</li>
+    {% endfor %}
+    </ul>
+    {% endif %}
                 </div>
                 <div class="ibox-content">
 
@@ -59,6 +66,7 @@
                                                          <form method="POST" >{% csrf_token %}
  																														{{ form_procurement.as_table }}
  																														<button type="submit" class="save btn btn-default">Save</button>
+                                                            <input type="submit" name="delete" class="save btn btn-default" value="Delete" ></input>
  																												</form>
                     </div>
 
@@ -86,6 +94,13 @@
                         <i class="fa fa-times"></i>
                     </a>
                 </div>
+                {% if messages %}
+<ul class="messages">
+{% for message in messages %}
+<li{% if message.tags %} class="{{ message.tags }}"{% endif %}>{{ message }}</li>
+{% endfor %}
+</ul>
+{% endif %}
             </div>
             <div class="ibox-content">
 
@@ -113,6 +128,7 @@
             <form method="POST" >{% csrf_token %}
                 {{ form.as_table }}
                 <button type="submit" class="save btn btn-default">Save</button>
+                <input type="submit" name="delete_product_growth_factor" class="save btn btn-default" value="Delete" ></input>
             </form>
                 </div>
 

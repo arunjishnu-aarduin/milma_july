@@ -19,7 +19,7 @@
 																									            <div class="col-lg-12">
 																									            <div class="ibox float-e-margins">
 																									                <div class="ibox-title">
-																									                    <h5>Method Percentage</h5>
+																									                    <h5>Fat Percentage Yield</h5>
 																									                    <div class="ibox-tools">
 																									                        <a class="collapse-link">
 																									                            <i class="fa fa-chevron-up"></i>
@@ -45,14 +45,16 @@
 																																		<thead>
 																																			<tr>
 																																				<td>Category</td>
+																																				<td>Issue</td>
 																																			 <td>Method</td>
 																																			 <td>Percentage</td>
 																																			</tr>
 																																		</thead>
 																																		<tbody>
-																																			{% for item in method_percentage_List %}
+																																			{% for item in fat_percentage_yield_List %}
 																																			<tr>
 																																			<td>{{item.category.name}}</td>
+																																			<td>{{item.issue.name}}</td>
 																																			<td>{{item.method}}</td>
 																																			<td>{{item.percentage}}</td>
 																																			</tr>
