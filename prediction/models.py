@@ -84,8 +84,8 @@ class Product(models.Model):
 class Issue(models.Model):
     id=models.CharField(max_length=3,primary_key=True)
     name=models.CharField(max_length=50)
-    fat=models.DecimalField(max_digits=5,decimal_places=4,validators=[validate_positive])
-    snf=models.DecimalField(max_digits=5,decimal_places=4,validators=[validate_positive])
+    fat=models.DecimalField(max_digits=7,decimal_places=4,validators=[validate_positive,MaxValueValidator(100)])
+    snf=models.DecimalField(max_digits=7,decimal_places=4,validators=[validate_positive,MaxValueValidator(100)])
     type=models.CharField(max_length=1,choices=ISSUE_CHOICES)
 
     def __str__(self):
@@ -150,10 +150,10 @@ class FatPercentageYield(models.Model):
     category=models.ForeignKey('Category',on_delete=models.CASCADE)
     issue=models.ForeignKey('Issue',on_delete=models.CASCADE)
     method=models.CharField(max_length=1,choices=METHOD_CHOICES)
-    percentage=models.DecimalField(max_digits=3,decimal_places=0,validators=[validate_positive,MaxValueValidator(100)])
+    percentage=models.DecimalField(max_digits=7,decimal_places=4,validators=[validate_positive,MaxValueValidator(100)])
     class Meta:
         unique_together = ('issue', 'category','method',)
-    
+
 
     def save(self, *args, **kwargs):
         super(FatPercentageYield, self).save(*args, **kwargs)
@@ -218,6 +218,18 @@ class ActualStockin(models.Model):
         return MONTHS[self.month]+"-"+str(self.product.code)+"-"+str(self.quantity)+"-"+self.from_diary.name+"->"+self.diary.name
 
 
+    """@property
+    def growthFactorStockout(self):
+        try:
+            product_category_growth_factor=ProductCategoryGrowthFactor.objects.get(category=self.product.category,month=self.month,diary=self.diary)
+
+            return product_category_growth_factor.growth_factor
+        except Exception as e:
+            print "Growth Factor not exist(Stockout)"
+            return 0
+"""
+
+
     @property
     def growthFactorStockout(self):
         try:
@@ -239,15 +251,22 @@ class ActualStockin(models.Model):
 
 
 
-    @property
+    """@property
     def growthFactorStockin(self):
         try:
             product_category_growth_factor=ProductCategoryGrowthFactor.objects.get(category=self.product.category,month=self.month,diary=self.from_diary)
             return product_category_growth_factor.growth_factor
         except Exception as e:
             print "Growth Factor not exist(Stockin)"
+            return 0"""
+    @property
+    def growthFactorStockin(self):
+        try:
+            product_category_growth_factor=ProductCategoryGrowthFactor.objects.get(category=self.product.category,month=self.month,diary=self.diary)
+            return product_category_growth_factor.growth_factor
+        except Exception as e:
+            print "Growth Factor not exist(Stockin)"
             return 0
-
 
     @property
     def targetStockOutQuantity(self):
@@ -281,7 +300,7 @@ class ActualStockin(models.Model):
 """
 class ProductCategoryGrowthFactor(models.Model):
     category=models.ForeignKey('Category',on_delete=models.CASCADE)
-    growth_factor=models.DecimalField(max_digits=3,decimal_places=0,validators=[validate_positive,MaxValueValidator(100)])
+    growth_factor=models.DecimalField(max_digits=8,decimal_places=4)
     month=models.PositiveSmallIntegerField(choices=MONTHS.items())
     diary=models.ForeignKey('Diary',on_delete=models.CASCADE)
     class Meta:
@@ -321,7 +340,7 @@ class ActualWMProcurement(models.Model):
 
 class ProcurementGrowthFactor(models.Model):
     month=models.PositiveSmallIntegerField(choices=MONTHS.items())
-    growth_factor=models.DecimalField(max_digits=3,decimal_places=0,validators=[validate_positive,MaxValueValidator(100)])
+    growth_factor=models.DecimalField(max_digits=8,decimal_places=4)
     diary=models.ForeignKey('Diary',on_delete=models.CASCADE)
     class Meta:
         unique_together = ('month', 'diary',)

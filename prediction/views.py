@@ -12,6 +12,7 @@ from django.utils.dates import MONTHS
 from .functions import *
 from django.contrib import messages
 from django.contrib.auth.decorators import user_passes_test
+from django.template import RequestContext
 
 # Create your views here.
 
@@ -85,7 +86,7 @@ def issuerequirement(request):
 
                 issue_as_issue[month[1]]=month_issue_requirement-issue_as_product_requirement
 
-
+                # messages.info(request, month[1]+"value:"+str(issue_as_product_requirement))
                 #issue_requirement=totalIssueRequirement(month[0],diary,issue)
                 """for category in CategoryList:
                     print category.name
@@ -162,6 +163,7 @@ def basicRequirement(request):
                     if issue.name=="CREAM":
                         try:
                             composition_ratio_derived=qcValue(issue_item)/(qcValue(issue_item)+qwmValue(issue_item)+qsmpValue(issue_item))
+
                         except Exception as e:
                             print "Exception handled in line no 168"
 
@@ -335,8 +337,19 @@ def variantNew(request):
 
             return redirect(variantNew)
         if form.is_valid():
-            variant = form.save(commit=False)
-            variant.save()
+            #variant = form.save(commit=False)
+
+            data = form.cleaned_data
+            """obj, created = Variant.objects.update_or_create(
+                    name=data['name'],
+                    defaults={'unit':data['unit']},
+
+                )"""
+            try:
+                variant=Variant(name=data['name'],unit=data['unit'])
+                variant.save()
+            except Exception as e:
+                messages.info(request, "Already Exist")
             return redirect(variantNew)
     else:
         form = VariantForm()
@@ -386,17 +399,27 @@ def productNew(request):
     else:
         form=ProductForm()
     return render(request,'prediction/Product.html',{'form':form,'productList':productList})
-
+@login_required
+@user_passes_test(group_check_union)
 def issueNew(request):
+    issueList=Issue.objects.all().order_by('id')
     if request.method == "POST":
-        form = ProductForm(request.POST)
+        form = IssueForm(request.POST)
         if form.is_valid():
-            product=form.save(commit=False)
-            product.save()
-            return HttpResponse("inserted")
+            data = form.cleaned_data
+            issue_obj=Issue.objects.get(id=data['issue'].id)
+            issue_obj.fat=data['fat']
+            issue_obj.snf=data['snf']
+            issue_obj.save()
+            # obj= issue_obj.update(
+            #         fat=data['fat'],snf=data['snf'],
+            #
+            #     )
+
+            return redirect(issueNew)
     else:
-        form=ProductForm()
-    return render(request,'prediction/all_new.html',{'form':form,'name':"Product"})
+        form=IssueForm()
+    return render(request,'prediction/Issue.html',{'form':form,'issueList':issueList})
 
 @login_required
 @user_passes_test(group_check_union)
@@ -409,6 +432,8 @@ def compositionNew(request):
             if form.is_valid():
 
                 try:
+
+
                     Composition.objects.get(category=form.cleaned_data["category"],method=form.cleaned_data["method"],issue=form.cleaned_data["issue"]).delete()
                     messages.info(request, "Successfully Deleted")
                 except Exception as e:
@@ -420,6 +445,7 @@ def compositionNew(request):
             composition=form.save(commit=False)
             composition.save()"""
         if form.is_valid():
+
             data = form.cleaned_data
             obj, created = Composition.objects.update_or_create(
                     method=data['method'],category=data['category'],issue=data["issue"],
@@ -553,7 +579,7 @@ def growthFactorEntry(request):
                     messages.info(request, "Successfully Deleted")
                 except Exception as e:
                     messages.info(request, "Deletion Failed:Not Exist")
-            return redirect("/growthFactorEntry/#procurement")
+            return redirect("/growthfactorentry/#procurement")
 
 
         if request.POST.get('delete_product_growth_factor',False):
@@ -565,7 +591,7 @@ def growthFactorEntry(request):
                 except Exception as e:
                     messages.info(request, "Deletion Failed:Not Exist")
 
-            return redirect("/growthFactorEntry/#product")
+            return redirect("/growthfactorentry/#product")
 
 
         if form.is_valid():
@@ -575,7 +601,7 @@ def growthFactorEntry(request):
                     defaults={'growth_factor':data['growth_factor']},
 
                 )
-            return redirect("/growthFactorEntry/#product")
+            return redirect("/growthfactorentry/#product")
         if form_procurement.is_valid():
             data = form_procurement.cleaned_data
             obj, created = ProcurementGrowthFactor.objects.update_or_create(
@@ -583,7 +609,7 @@ def growthFactorEntry(request):
                     defaults={'growth_factor':data['growth_factor']},
 
                 )
-            return redirect("/growthFactorEntry/#procurement")
+            return redirect("/growthfactorentry/#procurement")
         """if form.is_valid():
 
             try:
@@ -634,7 +660,7 @@ def growthFactorEntryUnion(request):
                     messages.info(request, "Successfully Deleted")
                 except Exception as e:
                     messages.info(request, "Deletion Failed:Not Exist")
-            return redirect("/growthFactorEntryUnion/#procurement")
+            return redirect("/growthfactorentryUnion/#procurement")
 
 
         if request.POST.get('delete_product_growth_factor',False):
@@ -646,7 +672,7 @@ def growthFactorEntryUnion(request):
                 except Exception as e:
                     messages.info(request, "Deletion Failed:Not Exist")
 
-            return redirect("/growthFactorEntryUnion/#product")
+            return redirect("/growthfactorentryUnion/#product")
 
 
         if form.is_valid():
@@ -656,7 +682,7 @@ def growthFactorEntryUnion(request):
                     defaults={'growth_factor':data['growth_factor']},
 
                 )
-            return redirect("/growthFactorEntryUnion/#product")
+            return redirect("/growthfactorentryUnion/#product")
         if form_procurement.is_valid():
             data = form_procurement.cleaned_data
 
@@ -665,7 +691,7 @@ def growthFactorEntryUnion(request):
                     defaults={'growth_factor':data['growth_factor']},
 
                 )
-            return redirect("/growthFactorEntryUnion/#procurement")
+            return redirect("/growthfactorentryUnion/#procurement")
             """
             try:
                 #product_category_growth_factor=form.save(commit=False)
@@ -708,7 +734,9 @@ def growthFactorEntryUnion(request):
 def productConfiguration(request):
     productConfigurationList=ProductConfiguration.objects.all().order_by('diary')
     if request.method == "POST":
+
         form = ProductConfigurationForm(request.POST)
+
         if request.POST.get('delete',False):
 
             if form.is_valid():
@@ -721,11 +749,27 @@ def productConfiguration(request):
 
             return redirect(productConfiguration)
 
-
         if form.is_valid():
-            product_configuration=form.save(commit=False)
-            product_configuration.save()
+
+            data = form.cleaned_data
+            """print data
+            obj, created = ProductConfiguration.objects.update_or_create(
+                    diary=data['diary'],
+                    defaults={'product':data['product']},
+
+                )"""
+
+            #product_configuration=form.save(commit=False)
+
+            try:
+                product_configuration=ProductConfiguration(diary=data['diary'],product=data['product'])
+                product_configuration.save()
+            except Exception as e:
+                messages.info(request, "Already Exist")
+
+
             return redirect(productConfiguration)
+
     else:
         form=ProductConfigurationForm()
     return render(request,'prediction/ProductConfiguration.html',{'form':form,'productConfigurationList':productConfigurationList})
@@ -750,7 +794,7 @@ def actualYearEntry(request):
                 except Exception as e:
                     messages.info(request, "Deletion Failed:Not Exist")
 
-            return redirect("/actualYearEntry/#actualwmprocurement")
+            return redirect("/actualyearentry/#actualwmprocurement")
 
         if form.is_valid():
             data = form.cleaned_data
@@ -759,7 +803,7 @@ def actualYearEntry(request):
                     defaults={'procurement':data['procurement']},
 
                 )
-            return redirect("/actualYearEntry/#actualwmprocurement")
+            return redirect("/actualyearentry/#actualwmprocurement")
 
         form_sale = ActualSaleForm(request.POST)
         if request.POST.get('delete_sale',False):
@@ -772,7 +816,7 @@ def actualYearEntry(request):
                 except Exception as e:
                     messages.info(request, "Deletion Failed:Not Exist")
 
-            return redirect("/actualYearEntry/#actualsale")
+            return redirect("/actualyearentry/#actualsale")
         if form_sale.is_valid():
             data = form_sale.cleaned_data
             obj, created = ActualSale.objects.update_or_create(
@@ -780,7 +824,7 @@ def actualYearEntry(request):
                     defaults={'sales':data['sales']},
 
                 )
-            return redirect("/actualYearEntry/#actualsale")
+            return redirect("/actualyearentry/#actualsale")
 
 
 
@@ -795,7 +839,7 @@ def actualYearEntry(request):
                 except Exception as e:
                     messages.info(request, "Deletion Failed:Not Exist")
 
-            return redirect("/actualYearEntry/#actualstockin")
+            return redirect("/actualyearentry/#actualstockin")
         if form_stockin.is_valid():
             data = form_stockin.cleaned_data
             obj, created = ActualStockin.objects.update_or_create(
@@ -803,7 +847,7 @@ def actualYearEntry(request):
                     defaults={'quantity':data['quantity']},
 
                 )
-            return redirect("/actualYearEntry/#actualstockin")
+            return redirect("/actualyearentry/#actualstockin")
 
         """if form.is_valid():
             actual_wm_procurement=form.save(commit=False)
@@ -1063,7 +1107,7 @@ def rawmaterialWise(request):
                         result=[]
 
 
-                    return render(request, "prediction/RawmaterialWise.html", {'result':result,'form':form,'total':total})
+                    return render(request, "prediction/RawmaterialWise.html", {'result':result,'form':form,'total':total,'target_unit':target_unit})
             else:
                 #return HttpResponse("You have not configured any product for category:"+category.name)
                 messages.info(request,"You have not configured any product for category:"+category.name)

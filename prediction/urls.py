@@ -15,6 +15,7 @@ urlpatterns=[
 
     url(r'^logout/$', auth_views.logout, {'next_page': '/login/'}, name='logout'),
     url(r'^login/$', auth_views.login, name='login'),
+    url(r'^$', auth_views.login, name='login'),
     url(r'^rawmaterialWise/',views.rawmaterialWise,name='rawmaterialWise'),
     url(r'^rawmaterialWiseUnion/',views.rawmaterialWiseUnion,name='rawmaterialWiseUnion'),
     url(r'^diaryNew/',views.diaryNew,name='diaryNew'),
@@ -25,7 +26,7 @@ urlpatterns=[
     url(r'^compositionNew/',views.compositionNew,name='compositionNew'),
     url(r'^methodpercentageNew/',views.methodpercentageNew,name='methodpercentageNew'),
     url(r'^fatPercentageYield/',views.fatPercentageYield,name='fatPercentageYield'),
-    
+
     url(r'^issueascategoryNew/',views.issueascategoryNew,name='issueascategoryNew'),
     url(r'^targetYear/',views.targetYear,name='targetYear'),
     url(r'^targetYearUnion/',views.targetYearUnion,name='targetYearUnion'),

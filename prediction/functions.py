@@ -1,5 +1,5 @@
 from .models import *
-
+from django.contrib import messages
 def getMethodPercentage(category,method):
     method_list=category.distinctMethodList
     method_percentage_list=MethodPercentage.objects.filter(category=category,method=method)
@@ -129,32 +129,32 @@ def IssueasProduct(month,diary,issue):
         stockoutdetail=ActualStockin.objects.filter(product__in=(Product.objects.filter(category=category)).values('code'),month=month,from_diary=diary)
         for sale in saledetails:
 
-            print "\t"+str(sale.product.code)+"-"+sale.product.category.name
-            print "\tsale in unit-"+str(sale.targetSalesUnit)
+
             #salesum+=sale.targetSalesQuantity
             salesum+=sale.targetSalesUnit
-        for stock in stockindetail:
-            print "\t"+str(stock.product.code)+"-"+sale.product.category.name
-            print "\tstockin in unit-"+(stock.targetStockinUnit)
-            #stockin+=stock.targetStockinQuantity
-            stockin+=stock.targetStockinUnit
 
+        for stock in stockindetail:
+
+
+            #stockin+=stock.targetStockinQuantity
+
+            stockin+=stock.targetStockinUnit
         for stock in stockoutdetail:
-            print "\t"+str(stock.product.code)+"-"+sale.product.category.name
-            print "\tstockout in unit-"+str(stock.targetStockoutUnit)
+
             #stockout+=stock.targetStockOutQuantity
             stockout+=stock.targetStockoutUnit
 
     except Exception as e:
         print "Exception handled for Issue As Category DoesNotExist"
         pass
+    # messages.info(request, MONTHS[month]+"sale:"+str(salesum)+"stockout:"+str(stockout)+"stockin:"+str(stockin))
 
 
 
-    print "\tsales",salesum
-    print "\tstockout",stockout
-    print "\tstockin",stockin
     target=(salesum+stockout-(stockin))
+    print "\t\t\t\t\t\ttarget",str(target)
+    # messages.info(request,"sale:"+str(salesum)+"stockout:"+str(stockout)+"stockin:"+str(stockin))
+    print MONTHS[month]
     return (MONTHS[month],target)
 
 def qcValue(milk_product):

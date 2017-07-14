@@ -17,10 +17,9 @@ $(document).ready(function(){
                     $(win.document.body).find('table')
                             .addClass('compact')
                             .css('font-size', 'inherit')
-                            .prepend(
+                          /*  .prepend(
                            '<img src="http://www.malabarmilma.com/images/milma_logo.jpg" style="position:absolute; top:0; left:0;" />'
-                       )
-
+                       )*/
                             ;
 
             }

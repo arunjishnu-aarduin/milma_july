@@ -1,8 +1,19 @@
 from django import forms
 from django.utils.dates import MONTHS
 from .models import *
+from django.core.validators import MaxLengthValidator,MaxValueValidator,MinValueValidator
+from django.core.exceptions import ValidationError
+from django.utils.translation import ugettext_lazy as _
 
 
+#funcions
+
+def validate_positive(value):
+    if value < 0:
+        raise ValidationError(
+            _('%(value)s is not a positive number'),
+            params={'value': value},
+        )
 
 
 
@@ -31,9 +42,11 @@ class ProductForm(forms.ModelForm):
         pass
 
 class IssueForm(forms.ModelForm):
+    fat=forms.DecimalField(max_digits=7,decimal_places=4,validators=[validate_positive,MaxValueValidator(100)])
+    snf=forms.DecimalField(max_digits=7,decimal_places=4,validators=[validate_positive,MaxValueValidator(100)])
     class Meta:
-        model=Issue
-        fields=('id','name','fat','snf','type')
+        model=Composition
+        fields=('issue','fat','snf',)
 
 class CompositionForm(forms.ModelForm):
     class Meta:

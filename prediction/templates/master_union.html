@@ -18,6 +18,12 @@
     <link href={% static 'master/css/animate.css' %} rel="stylesheet">
     <link href={% static 'master/css/style.css' %} rel="stylesheet">
 
+<!--loading button
+-->
+		<link rel="stylesheet" href={% static 'master/css/plugins/ladda/ladda-themeless.min.css' %}>
+		<script src={% static 'master/js/plugins/ladda/ladda.jquery.min.js' %}></script>
+		<script src={% static 'master/js/plugins/ladda/spin.min.js' %}></script>
+		<script src={% static 'master/js/plugins/ladda/ladda.min.js' %}></script>
 		<!-- Mainly scripts -->
 		<script src={% static 'master/js/jquery-3.1.1.min.js'%} ></script>
 		<script src={% static 'master/js/bootstrap.min.js'%}></script>
@@ -32,15 +38,17 @@
 
 		<!-- Page-Level Scripts -->
 		<script src={% static 'master/js/datatable_custom.js'%}></script>
-
+ {% block head %}{% endblock %}
 </head>
 
-<body>
-
+<body class="skin-1 fixed-nav fixed-nav-basic">
+<!-- <body class="pace-done  skin-1 fixed-nav fixed-nav-basic"> -->
     <div id="wrapper">
 
     <nav class="navbar-default navbar-static-side" role="navigation">
-        <div class="sidebar-collapse">
+    <!--    <div class="sidebar-collapse">-->
+
+			<div style="overflow: hidden; width: auto; height: 100%;" class="sidebar-collapse">
             <ul class="nav metismenu" id="side-menu">
                 <li class="nav-header">
                     <div class="dropdown profile-element"> <span>
@@ -133,6 +141,7 @@
 									<a href="index.html"><i class="fa fa-th-large"></i> <span class="nav-label">Configuration</span> <span class="fa arrow"></span></a>
 									<ul class="nav nav-second-level collapse">
 										<li><a href="/variantNew/"> Variant</a></li>
+										<li><a href="/issueNew/"> Issue</a></li>
 										<li><a href="/productNew/"> Product</a></li>
 										<li><a href="/compositionNew/">Composition</a></li>
 										<li><a href="/methodpercentageNew/">Method Percentage</a></li>
@@ -144,12 +153,15 @@
 
             </ul>
 
-        </div>
+					</div>
+
+
+
     </nav>
 
         <div id="page-wrapper" class="gray-bg">
 					<div class="row border-bottom">
-							<nav class="navbar navbar-static-top" role="navigation" style="margin-bottom: 0">
+							<nav class="navbar navbar-fixed-top" role="navigation" style="margin-bottom: 0">
 							<div class="navbar-header">
 							<a class="navbar-minimalize minimalize-styl-2 btn btn-primary " href="#"><i class="fa fa-bars"></i> </a>
 
@@ -180,7 +192,8 @@
 
 
 
-        <div class="footer">
+			<div class="footer fixed">
+				<!--<div class="footer">-->
             <div class="pull-right">
                  <strong>Prediction</strong>
             </div>
