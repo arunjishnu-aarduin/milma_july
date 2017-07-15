@@ -103,7 +103,7 @@ class Composition(models.Model):
             try:
 
                 issue_as_category=IssueAsCategory.objects.get(category=self.category)
-
+                
                 fat_percentage_yield=FatPercentageYield.objects.get(category=self.category,issue=self.issue,method=self.method)
 
                 ratio_value=(issue_as_category.issue.fat/100)/((fat_percentage_yield.percentage/100)*(self.issue.fat/100))

@@ -88,48 +88,12 @@ def issuerequirement(request):
 
                 # messages.info(request, month[1]+"value:"+str(issue_as_product_requirement))
                 #issue_requirement=totalIssueRequirement(month[0],diary,issue)
-                """for category in CategoryList:
-                    print category.name
-                    issue_requirement+=totalIssueRequirement(category,month[0],diary,issue)
-                    saledetails=ActualSale.objects.filter(product__in=(Product.objects.filter(category=category)).values('code'),month=month[0],diary=diary)
 
-                    stockindetail=ActualStockin.objects.filter(product__in=(Product.objects.filter(category=category)).values('code'),month=month[0],diary=diary)
-
-                    stockoutdetail=ActualStockin.objects.filter(product__in=(Product.objects.filter(category=category)).values('code'),month=month[0],from_diary=diary)
-
-                    salesum=0
-                    stockout=0
-                    stockin=0
-                    for sale in saledetails:
-
-                        print "\t"+str(sale.product.code)+"-"+sale.product.category.name
-                        print "\tsale-"+str(sale.targetSalesQuantity)
-                        salesum+=sale.targetSalesQuantity
-                    for stock in stockindetail:
-                        print "\t"+str(stock.product.code)+"-"+sale.product.category.name
-                        print "\tstockin-"+(stock.targetStockinQuantity)
-                        stockin+=stock.targetStockinQuantity
-
-                    for stock in stockoutdetail:
-                        print "\t"+str(stock.product.code)+"-"+sale.product.category.name
-                        print "\tstockout-"+str(stock.targetStockOutQuantity)
-                        stockout+=stock.targetStockOutQuantity
-
-                    print "\tsales",salesum
-                    print "\tstockout",stockout
-                    print "\tstockin",stockin
-                    target=(salesum+stockout-(stockin))
-                    print "\tRequired issue  "+issue.name
-                    requested_issue=issue
-                    print "\tTarget",target
-                    issue_requirement+=requireIssue(category,target)
-
-
-                    print "issue_requirement",issue_requirement"""
                 #issue_monthwise.append({month[1]:issue_requirement})
 
 
-            print issue_monthwise
+
+            # print issue_monthwise
             return render(request, "prediction/IssueWise.html",{"issue_monthwise":issue_monthwise,'form':form,'issue_as_product':issue_as_product,'issue_as_issue':issue_as_issue})
 
     else:
@@ -153,6 +117,7 @@ def basicRequirement(request):
             for month in MONTHS.items():
 
                 print month[1]
+                # messages.info(request,"issue"+str(issue)+"diary"+str(diary)+"month"+str(month[0]))
                 ret_month,month_issue_requirement=totalIssueRequirement(month[0],diary,issue)
                 month_requirement_for_milk_issue_production=0
                 type2_issue_list=Issue.objects.filter(type='2')
@@ -183,8 +148,11 @@ def basicRequirement(request):
 
                     requirement_to_produce_milk_issue=month_issue_requirement*composition_ratio_derived
                     month_requirement_for_milk_issue_production+=requirement_to_produce_milk_issue
+
                 total_month_requirement=month_requirement_for_milk_issue_production + month_issue_requirement
+
                 total_requirement[month[1]]=total_month_requirement
+
 
             return render(request, "prediction/IssueWiseBasic.html",{"issue_monthwise":total_requirement,'form':form})
 
@@ -192,6 +160,7 @@ def basicRequirement(request):
         form = IssueRequirementFormBasic()
     #return render(request, 'prediction/issue_requirement.html', {'form': form})
     return render(request, 'prediction/IssueWiseBasic.html', {'form': form})
+
 @login_required
 @user_passes_test(group_check_union)
 def basicRequirementUnion(request):
@@ -207,9 +176,11 @@ def basicRequirementUnion(request):
 
             total_requirement_union={}
 
+
             for month in MONTHS.items():
                 print month[1]
                 diary_list=Diary.objects.all()
+                total_requirement_diary = 0
                 for diary in diary_list:
 
                     ret_month,month_issue_requirement=totalIssueRequirement(month[0],diary,issue)
@@ -242,7 +213,10 @@ def basicRequirementUnion(request):
                         requirement_to_produce_milk_issue=month_issue_requirement*composition_ratio_derived
                         month_requirement_for_milk_issue_production+=requirement_to_produce_milk_issue
                     total_month_requirement=month_requirement_for_milk_issue_production + month_issue_requirement
-                    total_requirement_union[month[1]]=total_month_requirement
+                    # total_requirement_union[month[1]]=total_month_requirement
+                    total_requirement_diary+=total_month_requirement
+                total_requirement_union[month[1]] = total_requirement_diary
+                # messages.info(request,"Requirement:"+str(total_requirement_diary)+"Month:"+str(month[1]))
 
 
 
@@ -510,18 +484,21 @@ def fatPercentageYield(request):
 
             return redirect(fatPercentageYield)
 
-        """if form.is_valid():
-            method_percentage=form.save(commit=False)
-            method_percentage.save()
-            return redirect(methodpercentageNew)"""
+
+        #  if form.is_valid():
+        #      method_percentage=form.save(commit=False)
+        #      method_percentage.save()
+        #      return redirect(fatPercentageYield)
         if form.is_valid():
+
+
             data = form.cleaned_data
             obj, created = FatPercentageYield.objects.update_or_create(
-                    method=data['method'],category=data['category'],issue=data['issue'],
-                    defaults={'percentage':data['percentage']},
+                     method=data['method'],category=data['category'],issue=data['issue'],
+                     defaults={'percentage':data['percentage']},
 
-                )
-            return redirect(fatPercentageYield)
+            )
+        return redirect(fatPercentageYield)
     else:
         form=FatPercentageYieldForm()
     return render(request,'prediction/FatPercentageYield.html',{'form':form,'fat_percentage_yield_List':fat_percentage_yield_List})
