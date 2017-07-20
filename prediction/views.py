@@ -13,7 +13,7 @@ from .functions import *
 from django.contrib import messages
 from django.contrib.auth.decorators import user_passes_test
 from django.template import RequestContext
-
+from collections import OrderedDict
 # Create your views here.
 
 
@@ -21,7 +21,9 @@ def diary_of_user(user):
 	try:
 		user_diary_link_obj=UserDiaryLink.objects.get(user=user)
 	except UserDiaryLink.DoesNotExist:
-		diary=None
+		user_diary_link_obj=None
+		print "Exception handled:User not linked with any diary"
+
 	return user_diary_link_obj.diary
 def getMethodPercentage(category,method):
 	method_list=category.distinctMethodList
@@ -42,7 +44,8 @@ def group_check_diary(user):
 	return user.groups.filter(name='Diary')
 def group_check_union(user):
 	return user.groups.filter(name='Union')
-
+def user_diary_link_check(user):
+	return UserDiaryLink.objects.filter(user=user)
 
 def diaryNew(request):
 
@@ -71,9 +74,19 @@ def issuerequirement(request):
 			diary=diary_of_user(request.user)
 			#CategoryList=Category.objects.all()
 			issue_requirement=0
-			issue_monthwise={}
-			issue_as_product={}
-			issue_as_issue={}
+
+
+			# issue_monthwise={}
+			issue_monthwise = OrderedDict()
+
+			# issue_as_product={}
+			issue_as_product =OrderedDict()
+
+
+			# issue_as_issue={}
+			issue_as_issue =OrderedDict()
+
+
 			#global requested_issue
 			for month in MONTHS.items():
 
@@ -108,45 +121,72 @@ def basicRequirement(request):
 		if form.is_valid():
 			issue_id=form.cleaned_data["issue"]
 
+
 			issue=Issue.objects.get(id=issue_id)
 
 			diary=diary_of_user(request.user)
 
-			total_requirement={}
+			# total_requirement={}
+			total_requirement = OrderedDict()
+
+			fwm = Issue.objects.get(name='WM').fat
+
+
+
 
 			for month in MONTHS.items():
 
-				print month[1]
+				# print month[1]
 				# messages.info(request,"issue"+str(issue)+"diary"+str(diary)+"month"+str(month[0]))
 				ret_month,month_issue_requirement=totalIssueRequirement(month[0],diary,issue)
+
 				month_requirement_for_milk_issue_production=0
 				type2_issue_list=Issue.objects.filter(type='2')
+
 				for issue_item in type2_issue_list:
 					issue_ret_month,month_issue_requirement=totalIssueRequirement(month[0],diary,issue_item)
 
 					composition_ratio_derived=0
 					if issue.name=="CREAM":
 						try:
-							composition_ratio_derived=qcValue(issue_item)/(qcValue(issue_item)+qwmValue(issue_item)+qsmpValue(issue_item))
+
+							if issue_item.fat>fwm:
+								composition_ratio_derived=qcValue(issue_item)/(qcValue(issue_item)+qwmValue(issue_item)+qsmpValue(issue_item))
+							else:
+								composition_ratio_derived =-1*( qcValue(issue_item) / (
+									(qwmValue(issue_item)-qcValue(issue_item))   + qsmpValue(issue_item)))
 
 						except Exception as e:
-							print "Exception handled in line no 168"
+							print "Exception handled in line no 142"
 
 					elif issue.name=="WM":
 						try:
-							composition_ratio_derived=qwmValue(issue_item)/(qcValue(issue_item)+qwmValue(issue_item)+qsmpValue(issue_item))
+							if issue_item.fat > fwm:
+								composition_ratio_derived=qwmValue(issue_item)/(qcValue(issue_item)+qwmValue(issue_item)+qsmpValue(issue_item))
+							else:
+								composition_ratio_derived = qwmValue(issue_item) / (
+									(qwmValue(issue_item)-qcValue(issue_item) )  + qsmpValue(issue_item))
 						except Exception as e:
-							print "Exception handled in line no 174"
+							print "Exception handled in line no 152"
 
 
 					elif issue.name=="SMP":
 						try:
-							composition_ratio_derived=qsmpValue(issue_item)/(qcValue(issue_item)+qwmValue(issue_item)+qsmpValue(issue_item))
+							# messages.info(request, "Month" + str(month[1]) + " Issue" + str(issue_item) + " Qsmp:" + str(
+							# 	qsmpValue(issue_item)) + " Qc:" + str(qcValue(issue_item)) + " Qwm:" + str(
+							# 	qwmValue(issue_item)))
+							if issue_item.fat > fwm:
+								composition_ratio_derived=qsmpValue(issue_item)/(qcValue(issue_item)+qwmValue(issue_item)+qsmpValue(issue_item))
+							else:
+								composition_ratio_derived = qsmpValue(issue_item) / (
+									(qwmValue(issue_item)-qcValue(issue_item)) + qsmpValue(issue_item))
 						except Exception as e:
-							 print "Exception handled in line no 181"
+							 print "Exception handled in line no 163"
 
 
 					requirement_to_produce_milk_issue=month_issue_requirement*composition_ratio_derived
+					# messages.info(request,
+					# 			  "Month" + str(month[1]) + "" + str(requirement_to_produce_milk_issue) + str(issue_item)+"  compo:"+str(composition_ratio_derived))
 					month_requirement_for_milk_issue_production+=requirement_to_produce_milk_issue
 
 				total_month_requirement=month_requirement_for_milk_issue_production + month_issue_requirement
@@ -172,11 +212,10 @@ def basicRequirementUnion(request):
 
 			issue=Issue.objects.get(id=issue_id)
 
+			total_requirement_union =OrderedDict()
+			# total_requirement_union={}
 
-
-			total_requirement_union={}
-
-
+			fwm = Issue.objects.get(name='WM').fat
 			for month in MONTHS.items():
 				print month[1]
 				diary_list=Diary.objects.all()
@@ -188,26 +227,44 @@ def basicRequirementUnion(request):
 					type2_issue_list=Issue.objects.filter(type='2')
 					for issue_item in type2_issue_list:
 						issue_ret_month,month_issue_requirement=totalIssueRequirement(month[0],diary,issue_item)
-
+						print str(month_issue_requirement)+""+str(issue_item.name)
 						composition_ratio_derived=0
-						if issue.name=="CREAM":
+						if issue.name == "CREAM":
 							try:
-								composition_ratio_derived=qcValue(issue_item)/(qcValue(issue_item)+qwmValue(issue_item)+qsmpValue(issue_item))
-							except Exception as e:
-								print "Exception handled in line no 224"
 
-						elif issue.name=="WM":
+								if issue_item.fat > fwm:
+									composition_ratio_derived = qcValue(issue_item) / (
+									qcValue(issue_item) + qwmValue(issue_item) + qsmpValue(issue_item))
+								else:
+									composition_ratio_derived = -1 * (qcValue(issue_item) / (
+										(qwmValue(issue_item) - qcValue(issue_item)) + qsmpValue(issue_item)))
+
+							except Exception as e:
+								print "Exception handled in line no 142"
+
+						elif issue.name == "WM":
 							try:
-								composition_ratio_derived=qwmValue(issue_item)/(qcValue(issue_item)+qwmValue(issue_item)+qsmpValue(issue_item))
+								if issue_item.fat > fwm:
+									composition_ratio_derived = qwmValue(issue_item) / (
+									qcValue(issue_item) + qwmValue(issue_item) + qsmpValue(issue_item))
+								else:
+									composition_ratio_derived = qwmValue(issue_item) / (
+										(qwmValue(issue_item) - qcValue(issue_item)) + qsmpValue(issue_item))
 							except Exception as e:
-								print "Exception handled in line no 230"
+								print "Exception handled in line no 152"
 
 
-						elif issue.name=="SMP":
+						elif issue.name == "SMP":
 							try:
-								composition_ratio_derived=qsmpValue(issue_item)/(qcValue(issue_item)+qwmValue(issue_item)+qsmpValue(issue_item))
+
+								if issue_item.fat > fwm:
+									composition_ratio_derived = qsmpValue(issue_item) / (
+									qcValue(issue_item) + qwmValue(issue_item) + qsmpValue(issue_item))
+								else:
+									composition_ratio_derived = qsmpValue(issue_item) / (
+										(qwmValue(issue_item) - qcValue(issue_item)) + qsmpValue(issue_item))
 							except Exception as e:
-								print "Exception handled in line no 237"
+								print "Exception handled in line no 163"
 
 
 						requirement_to_produce_milk_issue=month_issue_requirement*composition_ratio_derived
@@ -244,7 +301,12 @@ def basicRequirementUnionDiaryWise(request):
 
 			diary=form_union.cleaned_data["diary"]
 
-			total_requirement={}
+
+			# total_requirement={}
+			total_requirement =OrderedDict()
+
+
+			fwm = Issue.objects.get(name='WM').fat
 
 			for month in MONTHS.items():
 
@@ -256,24 +318,41 @@ def basicRequirementUnionDiaryWise(request):
 					issue_ret_month,month_issue_requirement=totalIssueRequirement(month[0],diary,issue_item)
 
 					composition_ratio_derived=0
-					if issue.name=="CREAM":
+					if issue.name == "CREAM":
 						try:
-							composition_ratio_derived=qcValue(issue_item)/(qcValue(issue_item)+qwmValue(issue_item)+qsmpValue(issue_item))
-						except Exception as e:
-							print "Exception handled in line no 270"
 
-					elif issue.name=="WM":
+							if issue_item.fat > fwm:
+								composition_ratio_derived = qcValue(issue_item) / (
+								qcValue(issue_item) + qwmValue(issue_item) + qsmpValue(issue_item))
+							else:
+								composition_ratio_derived = -1 * (qcValue(issue_item) / (
+									(qwmValue(issue_item) - qcValue(issue_item)) + qsmpValue(issue_item)))
+
+						except Exception as e:
+							print "Exception handled in line no 142"
+
+					elif issue.name == "WM":
 						try:
-							composition_ratio_derived=qwmValue(issue_item)/(qcValue(issue_item)+qwmValue(issue_item)+qsmpValue(issue_item))
+							if issue_item.fat > fwm:
+								composition_ratio_derived = qwmValue(issue_item) / (
+								qcValue(issue_item) + qwmValue(issue_item) + qsmpValue(issue_item))
+							else:
+								composition_ratio_derived = qwmValue(issue_item) / (
+									(qwmValue(issue_item) - qcValue(issue_item)) + qsmpValue(issue_item))
 						except Exception as e:
-							print "Exception handled in line no 276"
+							print "Exception handled in line no 152"
 
 
-					elif issue.name=="SMP":
+					elif issue.name == "SMP":
 						try:
-							composition_ratio_derived=qsmpValue(issue_item)/(qcValue(issue_item)+qwmValue(issue_item)+qsmpValue(issue_item))
+							if issue_item.fat > fwm:
+								composition_ratio_derived = qsmpValue(issue_item) / (
+								qcValue(issue_item) + qwmValue(issue_item) + qsmpValue(issue_item))
+							else:
+								composition_ratio_derived = qsmpValue(issue_item) / (
+									(qwmValue(issue_item) - qcValue(issue_item)) + qsmpValue(issue_item))
 						except Exception as e:
-							 print "Exception handled in line no 283"
+							print "Exception handled in line no 163"
 
 
 					requirement_to_produce_milk_issue=month_issue_requirement*composition_ratio_derived
@@ -304,7 +383,7 @@ def variantNew(request):
 			if form.is_valid():
 
 				try:
-					Variant.objects.get(name=form.cleaned_data["name"],unit=form.cleaned_data["unit"]).delete()
+					Variant.objects.get(name=str(form.cleaned_data["first_name"])+str(form.cleaned_data["unit_name"]),unit=form.cleaned_data["unit"]).delete()
 					messages.info(request, "Successfully Deleted")
 				except Exception as e:
 					messages.info(request, "Deletion Failed:Not Exist")
@@ -314,13 +393,14 @@ def variantNew(request):
 			#variant = form.save(commit=False)
 
 			data = form.cleaned_data
+
 			"""obj, created = Variant.objects.update_or_create(
 					name=data['name'],
 					defaults={'unit':data['unit']},
 
 				)"""
 			try:
-				variant=Variant(name=data['name'],unit=data['unit'])
+				variant=Variant(name=str(data['first_name'])+str(data['unit_name']),unit=data['unit'])
 				variant.save()
 			except Exception as e:
 				messages.info(request, "Already Exist")
@@ -363,11 +443,23 @@ def productNew(request):
 			product.save()"""
 		if form.is_valid():
 			data = form.cleaned_data
-			obj, created = Product.objects.update_or_create(
+			if data['category'].specific_gravity==1:
+				obj, created = Product.objects.update_or_create(
 					code=data['code'],category=data['category'],variant=data["variant"],
 					defaults={'rate':data['rate']},
 
 				)
+			else:
+				if ("l" in str(data['variant'].name)) or ("L" in str(data['variant'].name)):
+					obj, created = Product.objects.update_or_create(
+						code=data['code'], category=data['category'], variant=data["variant"],
+						defaults={'rate': data['rate']},
+
+					)
+				else:
+					messages.info(request,"Please Check The Selected Variant")
+
+
 
 			return redirect(productNew)
 	else:
@@ -421,6 +513,9 @@ def compositionNew(request):
 		if form.is_valid():
 
 			data = form.cleaned_data
+			if data['category'].name == "GHEE" or data['category'].name=="BUTTER":
+				messages.info(request,"Ratio Is Auto Generated")
+
 			obj, created = Composition.objects.update_or_create(
 					method=data['method'],category=data['category'],issue=data["issue"],
 					defaults={'ratio':data['ratio']},
@@ -516,8 +611,10 @@ def issueascategoryNew(request):
 
 @login_required
 @user_passes_test(group_check_diary)
+# @user_passes_test(user_diary_link_check)
 def targetYear(request):
 	diary=diary_of_user(request.user)
+
 	actualProductSales=ActualSale.objects.filter(diary=diary).order_by('month')
 	actualProductStockIn=ActualStockin.objects.filter(diary=diary).order_by('month')
 	actualProductStockOut=ActualStockin.objects.filter(from_diary=diary).order_by('month')
@@ -719,7 +816,27 @@ def productConfiguration(request):
 			if form.is_valid():
 
 				try:
+
+
+
 					ProductConfiguration.objects.get(product=form.cleaned_data["product"],diary=form.cleaned_data["diary"]).delete()
+
+					sale=ActualSale.objects.filter(product=form.cleaned_data["product"],
+										   diary=form.cleaned_data["diary"])
+					stockin=ActualStockin.objects.filter(product=form.cleaned_data["product"],
+											  diary=form.cleaned_data["diary"])
+					stockout=ActualStockin.objects.filter(product=form.cleaned_data["product"],
+											  from_diary=form.cleaned_data["diary"])
+					if sale.count()>0:
+						ActualSale.objects.get(product=form.cleaned_data["product"],
+											   diary=form.cleaned_data["diary"]).delete()
+					if stockin.count()>0:
+						ActualStockin.objects.get(product=form.cleaned_data["product"],
+											  diary=form.cleaned_data["diary"]).delete()
+					if stockout.count()>0:
+						ActualStockin.objects.get(product=form.cleaned_data["product"],
+													 from_diary=form.cleaned_data["diary"]).delete()
+
 					messages.info(request, "Successfully Deleted")
 				except Exception as e:
 					messages.info(request, "Deletion Failed:Not Exist")
@@ -759,6 +876,7 @@ def actualYearEntry(request):
 	ActualStockinList=ActualStockin.objects.filter(diary=diary).order_by('month')
 	ActualStockoutList=ActualStockin.objects.filter(from_diary=diary).order_by('month')
 	if request.method == "POST":
+
 		form = ActualWMProcurementForm(request.POST)
 
 		if request.POST.get('delete',False):
@@ -775,6 +893,7 @@ def actualYearEntry(request):
 
 		if form.is_valid():
 			data = form.cleaned_data
+
 			obj, created = ActualWMProcurement.objects.update_or_create(
 					diary=diary,month=data['month'],
 					defaults={'procurement':data['procurement']},
@@ -795,7 +914,9 @@ def actualYearEntry(request):
 
 			return redirect("/actualyearentry/#actualsale")
 		if form_sale.is_valid():
+
 			data = form_sale.cleaned_data
+
 			obj, created = ActualSale.objects.update_or_create(
 					diary=diary,month=data['month'],product=data["product"],
 					defaults={'sales':data['sales']},
@@ -819,11 +940,18 @@ def actualYearEntry(request):
 			return redirect("/actualyearentry/#actualstockin")
 		if form_stockin.is_valid():
 			data = form_stockin.cleaned_data
-			obj, created = ActualStockin.objects.update_or_create(
+			product_config_check=ProductConfiguration.objects.filter(diary=data['from_diary'],product=data["product"])
+
+
+			if product_config_check.count()>0:
+
+				obj, created = ActualStockin.objects.update_or_create(
 					diary=diary,from_diary=data['from_diary'],month=data['month'],product=data["product"],
 					defaults={'quantity':data['quantity']},
 
 				)
+			else:
+				messages.info(request,"Save failed:Product not Configured in From Diary")
 			return redirect("/actualyearentry/#actualstockin")
 
 		"""if form.is_valid():
@@ -845,7 +973,10 @@ def actualYearEntry(request):
 	else:
 		form=ActualWMProcurementForm()
 		form_sale = ActualSaleForm()
+		form_sale.fields['product'].queryset=Product.objects.filter(code__in=(ProductConfiguration.objects.filter(diary=diary).values('product'))).all()
+
 		form_stockin=ActualStockinForm()
+		form_stockin.fields['product'].queryset=Product.objects.filter(code__in=(ProductConfiguration.objects.filter(diary=diary).values('product'))).all()
 	return render(request,'prediction/ActualYearEntry.html',{'form':form,'ActualWMProcurementList':ActualWMProcurementList,'form_sale':form_sale,'ActualSaleList':ActualSaleList,'form_stockin':form_stockin,'ActualStockinList':ActualStockinList,'ActualStockoutList':ActualStockoutList})
 
 @login_required
@@ -1245,16 +1376,25 @@ def issuerequirementUnion(request):
 
 			#CategoryList=Category.objects.all()
 			issue_requirement=0
-			issue_monthwise={}
-			issue_as_product={}
-			issue_as_issue={}
+			#changed for ordering the month
+
+			# issue_monthwise={}
+			issue_monthwise=OrderedDict()
+			issue_as_product = OrderedDict()
+			issue_as_issue = OrderedDict()
+			# issue_as_product={}
+			# issue_as_issue={}
+
+			#
 			#global requested_issue
 			for month in MONTHS.items():
 
-				print month[1]
+				# print "first"+str(month[1])
 				ret_month,month_issue_requirement=totalIssueRequirement(month[0],diary,issue)
 				issue_monthwise[ret_month]=month_issue_requirement
+
 				ret_issueasproduct_month,issue_as_product_requirement=IssueasProduct(month[0],diary,issue)
+
 				issue_as_product[ret_issueasproduct_month]=issue_as_product_requirement
 
 				issue_as_issue[month[1]]=month_issue_requirement-issue_as_product_requirement
@@ -1302,7 +1442,7 @@ def issuerequirementUnion(request):
 				#issue_monthwise.append({month[1]:issue_requirement})
 
 
-			print issue_monthwise
+				# print str(issue_monthwise)+str(month[1])
 			return render(request, "prediction/IssueWiseUnion.html",{"issue_monthwise":issue_monthwise,'form':form,'issue_as_product':issue_as_product,'issue_as_issue':issue_as_issue})
 
 	else:

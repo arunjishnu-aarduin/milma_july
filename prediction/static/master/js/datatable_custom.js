@@ -1,6 +1,9 @@
 $(document).ready(function(){
     $('.dataTables-example').DataTable({
         pageLength: 25,
+//        Changed for disable sorting on month column
+        order: [],
+        //
         responsive: true,
         dom: '<"html5buttons"B>lTfgitp',
         buttons: [

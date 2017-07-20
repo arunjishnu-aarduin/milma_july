@@ -5,6 +5,16 @@ from django.core.validators import MaxLengthValidator,MaxValueValidator,MinValue
 from django.core.exceptions import ValidationError
 from django.utils.translation import ugettext_lazy as _
 
+#Choices
+
+VARIANT_CHOICES = (
+	('Kg', 'Kg'),
+	('mg', 'mg'),
+    ('L', 'L'),
+    ('ml', 'ml'),
+
+)
+
 
 #funcions
 
@@ -23,9 +33,12 @@ class DiaryForm(forms.ModelForm):
         fields=('id','name')
 
 class VariantForm(forms.ModelForm):
+    first_name=forms.FloatField(validators=[validate_positive])
+    unit_name=forms.ChoiceField(choices=VARIANT_CHOICES)
     class Meta:
         model=Variant
-        fields=('name','unit')
+
+        fields=('first_name','unit_name','unit',)
     def validate_unique(self):
         pass
 
@@ -73,6 +86,7 @@ class IssueAsCategoryForm(forms.ModelForm):
         fields=('issue','category')
 
 class ActualSaleForm(forms.ModelForm):
+
     class Meta:
         model=ActualSale
         fields=('month','product','sales')
@@ -86,6 +100,7 @@ class ActualSaleFormUnion(forms.ModelForm):
         pass
 
 class ActualStockinForm(forms.ModelForm):
+
     class Meta:
         model=ActualStockin
         fields=('month','product','quantity','from_diary')
@@ -100,13 +115,14 @@ class ActualStockinFormUnion(forms.ModelForm):
 class ProductCategoryGrowthFactorForm(forms.ModelForm):
     class Meta:
         model=ProductCategoryGrowthFactor
-        fields=('category','growth_factor','month')
-
+        fields=('month','category','growth_factor')
+    def validate_unique(self):
+        pass
 
 class ProductCategoryGrowthFactorFormUnion(forms.ModelForm):
     class Meta:
         model=ProductCategoryGrowthFactor
-        fields=('category','growth_factor','month','diary')
+        fields=('diary','month','category','growth_factor')
     def validate_unique(self):
         pass
 class ProductConfigurationForm(forms.ModelForm):
@@ -137,7 +153,9 @@ class ProcurementGrowthFactorForm(forms.ModelForm):
 class ProcurementGrowthFactorFormUnion(forms.ModelForm):
     class Meta:
         model=ProcurementGrowthFactor
-        fields=('month','growth_factor','diary')
+        fields=('diary','month','growth_factor')
+    def validate_unique(self):
+        pass
 class IssueRequirementForm(forms.ModelForm):
     #month=forms.ChoiceField(choices=MONTHS.items())
     class Meta:
@@ -145,7 +163,7 @@ class IssueRequirementForm(forms.ModelForm):
         #fields=('issue','month',)
         fields=('issue',)
 class IssueRequirementFormBasic(forms.Form):
-    #month=forms.ChoiceField(choices=MONTHS.items())
+    # month=forms.ChoiceField(choices=MONTHS.items())
     Issue_Choice=Issue.objects.filter(type='3').exclude(name__in=['ADA','SUGAR'])
     issue=forms.ChoiceField(choices=( (x.id, x.name) for x in Issue_Choice ))
 class IssueRequirementFormBasicUnion(forms.ModelForm):

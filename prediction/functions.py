@@ -19,7 +19,7 @@ def getMethodPercentage(category,method):
 
 def requireIssue(category,sale_in_unit):
 	#methodlist=Composition.objects.distinct().filter(cat_id_id=cat_id)
-	print "Category:"+str(category)+"  sale in unit:"+str(sale_in_unit)
+	# print "Category:"+str(category)+"  sale in unit:"+str(sale_in_unit)
 
 	method_list=Composition.objects.filter(category=category).values('method').distinct()
 
@@ -33,9 +33,9 @@ def requireIssue(category,sale_in_unit):
 		#print "\t\tmethod"+method['method']
 		composition_list=Category.objects.get(code=category.code).composition_set.filter(method=method['method'])
 		target_composition=0
-		print composition_list
+		# print composition_list
 		for composition in composition_list:
-			print "\t\t"+composition.issue.name
+			# print "\t\t"+composition.issue.name
 			target_unit=0
 			target_inner=0
 			if composition.issue==requested_issue:
@@ -49,20 +49,24 @@ def requireIssue(category,sale_in_unit):
 
 
 
-				print "\t\t\ttarget_unit",target_unit
+				# print "\t\t\ttarget_unit",target_unit
 			elif composition.issueType=='1':
 
 
 
-				print "\t\t\ttype1"
-				new_category=IssueAsCategory.objects.get(issue=composition.issue)
-				new_sale_in_unit=sale_in_unit*composition.ratio
-				print "\t\t\tnew_category "+new_category.category.name
-				print "\t\t\tnew_sale_in_unit",new_sale_in_unit
+				# print "\t\t\ttype1"
+				try:
+					new_category=IssueAsCategory.objects.get(issue=composition.issue)
+					new_sale_in_unit=sale_in_unit*composition.ratio
+				# print "\t\t\tnew_category "+new_category.category.name
+				# print "\t\t\tnew_sale_in_unit",new_sale_in_unit
 				# print "category-----------------------------------------------------"+str(new_category.category)+"sale"+str(new_sale_in_unit)
 				# continue
-				target_inner+=requireIssue(new_category.category,new_sale_in_unit)
-				print "\t\t\ttarget_inner",target_inner
+					target_inner+=requireIssue(new_category.category,new_sale_in_unit)
+				except Exception as e:
+					print "Exception handled for Issue As Category DoesNotExist{Require Issue Function}"
+					pass
+				# print "\t\t\ttarget_inner",target_inner
 
 			else :
 				 print "\t\t\t\tnot match      "+str(composition.issue)
@@ -131,7 +135,7 @@ def totalIssueRequirement(month,diary,issue):
 		category_issue_requirement+=requireIssue(category,target)
 		month_issue_requirement+=category_issue_requirement
 
-		print "category_issue_requirement returned :"+str(category_issue_requirement)
+		# print "category_issue_requirement returned :"+str(category_issue_requirement)
 	#return { MONTHS[month]:month_issue_requirement}
 	m,issueasproduct=IssueasProduct(month,diary,issue)
 	month_issue_requirement+=issueasproduct
@@ -175,9 +179,9 @@ def IssueasProduct(month,diary,issue):
 
 
 	target=(salesum+stockout-(stockin))
-	print "\t\t\t\t\t\ttarget",str(target)
+	# print "\t\t\t\t\t\ttarget",str(target)
 	# messages.info(request,"sale:"+str(salesum)+"stockout:"+str(stockout)+"stockin:"+str(stockin))
-	print MONTHS[month]
+	# print MONTHS[month]
 	return (MONTHS[month],target)
 
 def qcValue(milk_product):
@@ -186,7 +190,12 @@ def qcValue(milk_product):
 		fwm=Issue.objects.get(name='WM').fat
 		mf=milk_product.fat
 
-		qc=(fwm*((fc-fwm)/100)-(mf*(fc-fwm)))/((2*mf)-(fwm/100)-(fc/100))
+		if (mf>fwm):
+			qc=(fwm*((fc-fwm))-(mf*(fc-fwm)))/((2*mf)-(fwm)-(fc))
+		else:
+			qc=(fwm*((fc-fwm))-(mf*(fc-fwm)))/(fc-fwm)
+
+
 		return qc
 	except Exception as e:
 		print "Exception handled from qcValue Function"
@@ -196,6 +205,7 @@ def qwmValue(milk_product):
 	try:
 		fc=Issue.objects.get(name='CREAM').fat
 		fwm=Issue.objects.get(name='WM').fat
+
 		qc=qcValue(milk_product)
 		qwm=fc-fwm+qc
 		return qwm
@@ -209,7 +219,13 @@ def kValue(milk_product):
 		qwm=qwmValue(milk_product)
 		swm=Issue.objects.get(name='WM').snf
 		sc=Issue.objects.get(name='CREAM').snf
-		k=(((qwm/100)*swm)+((qc/100)*sc))/(qwm+qc)
+		mf = milk_product.fat
+		fwm = Issue.objects.get(name='WM').fat
+
+		if (mf>fwm):
+			k = ((qwm * swm) + (qc * sc)) / (qwm + qc)
+		else:
+			k=((qwm*swm)-(qc*sc))/(qwm-qc)
 		return k
 	except Exception as e:
 		print "Exception handled from kValue Function"
@@ -222,7 +238,12 @@ def qsmpValue(milk_product):
 		sm=milk_product.snf
 		ssmp=Issue.objects.get(name='SMP').snf
 		k=kValue(milk_product)
-		qsmp=(qwm+qc)*((sm-k)/(ssmp-sm))
+		mf = milk_product.fat
+		fwm = Issue.objects.get(name='WM').fat
+		if(mf>fwm):
+			qsmp=(qwm+qc)*((sm-k)/(ssmp-sm))
+		else:
+			qsmp = (qwm - qc) * ((sm - k) / (ssmp - sm))
 		return qsmp
 	except Exception as e:
 		print "Exception handled from qsmpValue Function"

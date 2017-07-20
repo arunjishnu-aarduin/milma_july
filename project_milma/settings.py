@@ -25,7 +25,7 @@ SECRET_KEY = 'rtvy^pwx6r_)f-2ul6w-7^^7@2x#fwhm2xyzgn4_%f)6$+y_&8'
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = ['139.59.68.207']
+ALLOWED_HOSTS = ['192.168.0.5','0.0.0.0','127.0.0.1','192.168.0.2','192.168.43.47']
 
 
 # Application definition
@@ -80,19 +80,6 @@ DATABASES = {
         'NAME': os.path.join(BASE_DIR, 'db.sqlite3'),
     }
 }
-"""
-DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.postgresql_psycopg2',
-        'NAME': 'django_db',
-        'USER': 'db_user',
-        'PASSWORD': 'crab@wrist',
-        'HOST': 'localhost',
-        'PORT': '',                      # Set to empty string for default.
-    }
-}
-
-"""
 
 LOGIN_REDIRECT_URL = "/home/"
 # Password validation
@@ -133,5 +120,4 @@ USE_TZ = True
 
 STATIC_URL = '/static/'
 #STATIC_ROOT = os.path.join(BASE_DIR, 'static')
-
 STATIC_ROOT = '/home/crabwrist/static/'

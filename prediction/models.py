@@ -51,7 +51,7 @@ class Diary(models.Model):
 		return self.name
 class Variant(models.Model):
 	name=models.CharField(max_length=50)
-	unit=models.PositiveSmallIntegerField()
+	unit=models.DecimalField(max_digits=12,decimal_places=5,validators=[validate_positive])
 	class Meta:
 		unique_together = ('name', 'unit',)
 	def __str__(self):
@@ -75,8 +75,8 @@ class Product(models.Model):
 	category=models.ForeignKey('Category',on_delete=models.CASCADE)
 	rate=models.DecimalField(max_digits=15,decimal_places=2,validators=[validate_positive])
 
-	class Meta:
-		unique_together = ('variant', 'category',)
+	# class Meta:
+	# 	unique_together = ('variant', 'category',)
 
 	def __str__(self):
 		return str(self.code)+"-"+self.category.name+"-"+self.variant.name
@@ -197,9 +197,13 @@ class ActualSale(models.Model):
 	@property
 	def targetSalesQuantity(self):
 		return (self.sales+(self.sales*self.growthFactor)/100)
+	# @property
+	# def targetSalesUnit(self):
+	# 	return self.product.variant.unit*self.targetSalesQuantity
+	#changed to add specific_gravity
 	@property
 	def targetSalesUnit(self):
-		return self.product.variant.unit*self.targetSalesQuantity
+		return self.product.variant.unit * self.targetSalesQuantity*self.product.category.specific_gravity
 	@property
 	def targetRevenue(self):
 		return self.product.rate*self.targetSalesQuantity
@@ -240,14 +244,14 @@ class ActualStockin(models.Model):
 			print "Growth Factor not exist(Stockout)"
 			return 0
 
-
+	# changed to add specific_gravity
 
 	@property
 	def targetStockinQuantity(self):
 		return (self.quantity+((self.quantity*self.growthFactorStockin)/100))
 	@property
 	def targetStockinUnit(self):
-		return (self.product.variant.unit*self.targetStockinQuantity)
+		return (self.product.variant.unit*self.targetStockinQuantity*self.product.category.specific_gravity)
 
 
 
@@ -268,6 +272,7 @@ class ActualStockin(models.Model):
 			print "Growth Factor not exist(Stockin)"
 			return 0
 
+	# changed to add specific_gravity
 	@property
 	def targetStockOutQuantity(self):
 		#target_stock_out=ActualStockin.objects.filter(from_diary=self.from_diary,month=self.month,product=self.product).aggregate(actual_stock_out=Coalesce(Sum('quantity'),0))['actual_stock_out']
@@ -275,18 +280,20 @@ class ActualStockin(models.Model):
 		return (self.quantity+((self.quantity*self.growthFactorStockout)/100))
 	@property
 	def targetStockoutUnit(self):
-		return (self.product.variant.unit*self.targetStockOutQuantity)
+		return (self.product.variant.unit*self.targetStockOutQuantity*self.product.category.specific_gravity)
 
 	@property
 	def actualStockOut(self):
 		actual_stock_out=ActualStockin.objects.filter(from_diary=self.diary,month=self.month,product=self.product).aggregate(actual_stock_out=Coalesce(Sum('quantity'),0))['actual_stock_out']
 		#the above query will return aggregate of actual stockout
 		return actual_stock_out
+
+	# changed to add specific_gravity
 	@property
 	def actualStockoutQuantity(self):
 		variant=self.product.variant
 		if variant != None:
-			return variant.unit*self.quantity*self.actualStockOut
+			return variant.unit*self.quantity*self.actualStockOut*self.product.category.specific_gravity
 		else:
 			return 0
 """
