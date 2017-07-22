@@ -14,6 +14,15 @@ from django.contrib import messages
 from django.contrib.auth.decorators import user_passes_test
 from django.template import RequestContext
 from collections import OrderedDict
+import time
+from threading import Thread
+import timeit
+#Thread Function
+
+
+
+
+
 # Create your views here.
 
 
@@ -92,6 +101,7 @@ def issuerequirement(request):
 
 				print month[1]
 				ret_month,month_issue_requirement=totalIssueRequirement(month[0],diary,issue)
+				# messages.info(request,str(month[1])+"---"+str(month_issue_requirement))
 				issue_monthwise[ret_month]=month_issue_requirement
 
 				ret_issueasproduct_month,issue_as_product_requirement=IssueasProduct(month[0],diary,issue)
@@ -138,12 +148,17 @@ def basicRequirement(request):
 
 				# print month[1]
 				# messages.info(request,"issue"+str(issue)+"diary"+str(diary)+"month"+str(month[0]))
-				ret_month,month_issue_requirement=totalIssueRequirement(month[0],diary,issue)
+
+				ret_month,month_issue_requirement_plus_sales=totalIssueRequirement(month[0],diary,issue)
 
 				month_requirement_for_milk_issue_production=0
 				type2_issue_list=Issue.objects.filter(type='2')
 
+				start = timeit.default_timer()
 				for issue_item in type2_issue_list:
+
+
+
 					issue_ret_month,month_issue_requirement=totalIssueRequirement(month[0],diary,issue_item)
 
 					composition_ratio_derived=0
@@ -166,6 +181,9 @@ def basicRequirement(request):
 							else:
 								composition_ratio_derived = qwmValue(issue_item) / (
 									(qwmValue(issue_item)-qcValue(issue_item) )  + qsmpValue(issue_item))
+							# messages.info(request, "Month" + str(month[1]) + " Issue" + str(issue_item) + " Qsmp:" + str(
+							# 	qsmpValue(issue_item)) + " Qc:" + str(qcValue(issue_item)) + " Qwm:" + str(
+							# 	qwmValue(issue_item)))
 						except Exception as e:
 							print "Exception handled in line no 152"
 
@@ -186,12 +204,29 @@ def basicRequirement(request):
 
 					requirement_to_produce_milk_issue=month_issue_requirement*composition_ratio_derived
 					# messages.info(request,
-					# 			  "Month" + str(month[1]) + "" + str(requirement_to_produce_milk_issue) + str(issue_item)+"  compo:"+str(composition_ratio_derived))
+					# 			  "Month" + str(month[1]) + "  Milk requirement  " + str(requirement_to_produce_milk_issue) + str(issue_item)+"  compo:"+str(composition_ratio_derived))
+
 					month_requirement_for_milk_issue_production+=requirement_to_produce_milk_issue
 
-				total_month_requirement=month_requirement_for_milk_issue_production + month_issue_requirement
+
+					# messages.info(request,"Month"+str(month[1])+"   "+str(month_issue_requirement)+"Issue"+str(issue_item))
+
+
+				# messages.info(request,"Month"+str(month[1])+"-Milk-"+str(month_requirement_for_milk_issue_production)+"-Issue-"+str(month_issue_requirement_plus_sales))
+				total_month_requirement=month_requirement_for_milk_issue_production + month_issue_requirement_plus_sales
+				stop = timeit.default_timer()
+
+				# print "Time-------------------" + str(stop - start)
+				# total_month_requirement = month_requirement_for_milk_issue_production
+
+
 
 				total_requirement[month[1]]=total_month_requirement
+
+
+
+
+
 
 
 			return render(request, "prediction/IssueWiseBasic.html",{"issue_monthwise":total_requirement,'form':form})
@@ -222,12 +257,19 @@ def basicRequirementUnion(request):
 				total_requirement_diary = 0
 				for diary in diary_list:
 
-					ret_month,month_issue_requirement=totalIssueRequirement(month[0],diary,issue)
+					ret_month,month_issue_requirement_plus_sales=totalIssueRequirement(month[0],diary,issue)
 					month_requirement_for_milk_issue_production=0
 					type2_issue_list=Issue.objects.filter(type='2')
 					for issue_item in type2_issue_list:
-						issue_ret_month,month_issue_requirement=totalIssueRequirement(month[0],diary,issue_item)
-						print str(month_issue_requirement)+""+str(issue_item.name)
+
+						# issue_ret_month,month_issue_requirement=totalIssueRequirement(month[0],diary,issue_item)
+
+						try:
+
+							month_issue_requirement=IssueRequirement.objects.get(month=month[0],diary=diary,issue=issue_item).requirement
+						except Exception as e:
+							month_issue_requirement=0
+
 						composition_ratio_derived=0
 						if issue.name == "CREAM":
 							try:
@@ -269,7 +311,9 @@ def basicRequirementUnion(request):
 
 						requirement_to_produce_milk_issue=month_issue_requirement*composition_ratio_derived
 						month_requirement_for_milk_issue_production+=requirement_to_produce_milk_issue
-					total_month_requirement=month_requirement_for_milk_issue_production + month_issue_requirement
+					total_month_requirement=month_requirement_for_milk_issue_production + month_issue_requirement_plus_sales
+					# total_month_requirement = month_requirement_for_milk_issue_production
+
 					# total_requirement_union[month[1]]=total_month_requirement
 					total_requirement_diary+=total_month_requirement
 				total_requirement_union[month[1]] = total_requirement_diary
@@ -310,12 +354,19 @@ def basicRequirementUnionDiaryWise(request):
 
 			for month in MONTHS.items():
 
-				print month[1]
-				ret_month,month_issue_requirement=totalIssueRequirement(month[0],diary,issue)
+				# print month[1]
+				ret_month,month_issue_requirement_plus_sales=totalIssueRequirement(month[0],diary,issue)
 				month_requirement_for_milk_issue_production=0
 				type2_issue_list=Issue.objects.filter(type='2')
 				for issue_item in type2_issue_list:
-					issue_ret_month,month_issue_requirement=totalIssueRequirement(month[0],diary,issue_item)
+
+					try:
+
+						month_issue_requirement = IssueRequirement.objects.get(month=month[0], diary=diary,
+																			   issue=issue_item).requirement
+					except Exception as e:
+						month_issue_requirement = 0
+					# issue_ret_month,month_issue_requirement=totalIssueRequirement(month[0],diary,issue_item)
 
 					composition_ratio_derived=0
 					if issue.name == "CREAM":
@@ -357,7 +408,9 @@ def basicRequirementUnionDiaryWise(request):
 
 					requirement_to_produce_milk_issue=month_issue_requirement*composition_ratio_derived
 					month_requirement_for_milk_issue_production+=requirement_to_produce_milk_issue
-				total_month_requirement=month_requirement_for_milk_issue_production + month_issue_requirement
+				total_month_requirement=month_requirement_for_milk_issue_production + month_issue_requirement_plus_sales
+
+				# total_month_requirement = month_requirement_for_milk_issue_production
 				total_requirement[month[1]]=total_month_requirement
 
 			return render(request, "prediction/IssueWiseBasicUnionDiaryWise.html",{"issue_monthwise":total_requirement,'form_union':form_union})
@@ -442,18 +495,21 @@ def productNew(request):
 			product=form.save(commit=False)
 			product.save()"""
 		if form.is_valid():
-			data = form.cleaned_data
-			if data['category'].specific_gravity==1:
-				obj, created = Product.objects.update_or_create(
-					code=data['code'],category=data['category'],variant=data["variant"],
-					defaults={'rate':data['rate']},
 
+			data = form.cleaned_data
+
+
+
+
+			if data['category'].specific_gravity==1:
+				obj, created = Product.objects.update_or_create(code=data['code'],
+																defaults={'category':data['category'],'variant': data['variant'],'rate':data['rate']},
 				)
 			else:
 				if ("l" in str(data['variant'].name)) or ("L" in str(data['variant'].name)):
 					obj, created = Product.objects.update_or_create(
-						code=data['code'], category=data['category'], variant=data["variant"],
-						defaults={'rate': data['rate']},
+						code=data['code'],
+						defaults={'category':data['category'],'variant': data["variant"],'rate': data['rate']},
 
 					)
 				else:
@@ -461,7 +517,10 @@ def productNew(request):
 
 
 
-			return redirect(productNew)
+
+
+
+				return redirect(productNew)
 	else:
 		form=ProductForm()
 	return render(request,'prediction/Product.html',{'form':form,'productList':productList})
@@ -1010,6 +1069,7 @@ def actualYearEntryUnion(request):
 					defaults={'procurement':data['procurement']},
 
 				)
+
 			return redirect("/actualYearEntryUnion/#actualwmprocurement")
 
 		form_sale = ActualSaleFormUnion(request.POST)
@@ -1019,19 +1079,24 @@ def actualYearEntryUnion(request):
 
 				try:
 					ActualSale.objects.get(diary=form_sale.cleaned_data["diary"],month=form_sale.cleaned_data["month"],product=form_sale.cleaned_data["product"]).delete()
+					t = Thread(target=totalIssueRequirementDB,
+							   args=(form_sale.cleaned_data["diary"], form_sale.cleaned_data["month"], form_sale.cleaned_data["product"].category))
+					t.start()
 					messages.info(request, "Successfully Deleted")
 				except Exception as e:
 					messages.info(request, "Deletion Failed:Not Exist")
 
 			return redirect("/actualYearEntryUnion/#actualsale")
 		if form_sale.is_valid():
-			print "save"
+
 			data = form_sale.cleaned_data
 			obj, created = ActualSale.objects.update_or_create(
 					diary=data['diary'],month=data['month'],product=data["product"],
 					defaults={'sales':data['sales']},
 
 				)
+			t = Thread(target=totalIssueRequirementDB, args=(data['diary'],data['month'],data["product"].category))
+			t.start()
 			return redirect("/actualYearEntryUnion/#actualsale")
 
 
@@ -1043,7 +1108,12 @@ def actualYearEntryUnion(request):
 
 				try:
 					ActualStockin.objects.get(diary=form_stockin.cleaned_data["diary"],from_diary=form_stockin.cleaned_data["from_diary"],month=form_stockin.cleaned_data["month"],product=form_stockin.cleaned_data["product"]).delete()
+					t = Thread(target=totalIssueRequirementDB,
+							   args=(form_stockin.cleaned_data["diary"], form_stockin.cleaned_data["month"], form_stockin.cleaned_data["product"].category))
+					t.start()
+
 					messages.info(request, "Successfully Deleted")
+
 				except Exception as e:
 					messages.info(request, "Deletion Failed:Not Exist")
 
@@ -1055,6 +1125,8 @@ def actualYearEntryUnion(request):
 					defaults={'quantity':data['quantity']},
 
 				)
+			t = Thread(target=totalIssueRequirementDB, args=(data['diary'], data['month'], data["product"].category))
+			t.start()
 			return redirect("/actualYearEntryUnion/#actualstockin")
 
 		"""
@@ -1372,7 +1444,7 @@ def issuerequirementUnion(request):
 			issue=form.cleaned_data["issue"]
 			#month=form.cleaned_data["month"]
 
-			diary=form.cleaned_data["diary"]
+			diary=form.cleaned_data["dairy"]
 
 			#CategoryList=Category.objects.all()
 			issue_requirement=0
@@ -1449,6 +1521,112 @@ def issuerequirementUnion(request):
 		form = IssueRequirementFormUnion()
 	#return render(request, 'prediction/issue_requirement.html', {'form': form})
 	return render(request, 'prediction/IssueWiseUnion.html', {'form': form})
+@login_required
+@user_passes_test(group_check_union)
+def interStockMilkTransferUnion(request):
+
+	if request.method == "POST":
+		form = MonthOnlyForm(request.POST)
+
+		if form.is_valid():
+
+			issue = Issue.objects.get(name='WM')
+
+			month = form.cleaned_data["month"]
+
+
+
+
+			resultitem = []
+
+			shortage_list=OrderedDict()
+			surplus_list=OrderedDict()
+
+
+			fwm = issue.fat
+
+			diary_list = Diary.objects.all()
+			total_requirement_diary_cpd = 0
+			for diary in diary_list:
+
+				# ret_month, month_issue_requirement = totalIssueRequirement(month, diary, issue)
+
+				month_requirement_for_milk_issue_production = 0
+				type2_issue_list = Issue.objects.filter(type='2')
+				for issue_item in type2_issue_list:
+
+					# issue_ret_month, month_issue_requirement = totalIssueRequirement(month, diary, issue_item)
+
+					try:
+
+						month_issue_requirement = IssueRequirement.objects.get(month=month, diary=diary,
+																			   issue=issue_item).requirement
+
+
+					except Exception as e:
+						month_issue_requirement = 0
+
+					composition_ratio_derived = 0
+					if  issue.name == "WM":
+						try:
+							if issue_item.fat > fwm:
+								composition_ratio_derived = qwmValue(issue_item) / (
+									qcValue(issue_item) + qwmValue(issue_item) + qsmpValue(issue_item))
+							else:
+								composition_ratio_derived = qwmValue(issue_item) / (
+									(qwmValue(issue_item) - qcValue(issue_item)) + qsmpValue(issue_item))
+						except Exception as e:
+							print "Exception handled in line no 1484"
+
+					requirement_to_produce_milk_issue = month_issue_requirement * composition_ratio_derived
+					month_requirement_for_milk_issue_production += requirement_to_produce_milk_issue
+
+				# total_month_requirement = month_requirement_for_milk_issue_production + month_issue_requirement
+				total_month_requirement = month_requirement_for_milk_issue_production
+				total_month_procurement=0
+				try:
+					Awm_obj=ActualWMProcurement.objects.get(diary=diary, month=month)
+					total_month_procurement = Awm_obj.targetProcurement
+				except Exception as e:
+					print "Exception handled in line 1492"
+
+				difference=total_month_procurement-total_month_requirement
+				if difference !=0:
+					type_of_difference=""
+					if difference>=0:
+						type_of_difference="Surplus"
+						surplus_list[diary.name]=difference
+					else:
+						type_of_difference="Shortage"
+						difference=difference*-1
+						shortage_list[diary.name]=difference
+
+					result = {"month":MONTHS[month],"diary":diary.name,"requirement":total_month_requirement,"procurement":total_month_procurement,"difference":difference,"type":type_of_difference}
+					resultitem.append(result)
+
+				if "CPD"==diary.id:
+					total_requirement_diary_cpd=total_month_requirement
+
+
+			if "KOZHIKODE" in surplus_list.keys():
+				surplus_list["KOZHIKODE"]-=total_requirement_diary_cpd
+
+				if "CENTRAL PRODUCTS" in shortage_list.keys():
+					del shortage_list["CENTRAL PRODUCTS"]
+			elif "KOZHIKODE" in shortage_list.keys():
+				shortage_list["KOZHIKODE"] -= total_requirement_diary_cpd
+
+				if "CENTRAL PRODUCTS" in shortage_list.keys():
+					del shortage_list["CENTRAL PRODUCTS"]
+
+			interMilkTransfer(shortage_list,surplus_list)
+
+			return render(request, 'prediction/InterStockMilkTransfer.html', {'form': form,'resultitem': resultitem})
+	else:
+		form = MonthOnlyForm()
+		return render(request, 'prediction/InterStockMilkTransfer.html', {'form': form})
+
+
 
 
 

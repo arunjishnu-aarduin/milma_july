@@ -11,6 +11,8 @@ from django.contrib.auth.models import User
 
 
 
+
+
 #choices
 ISSUE_CHOICES = (
 	('1', 'TYPE 1'),
@@ -76,7 +78,7 @@ class Product(models.Model):
 	rate=models.DecimalField(max_digits=15,decimal_places=2,validators=[validate_positive])
 
 	# class Meta:
-	# 	unique_together = ('variant', 'category',)
+	# 	unique_together = ('code','variant', 'category',)
 
 	def __str__(self):
 		return str(self.code)+"-"+self.category.name+"-"+self.variant.name
@@ -161,6 +163,7 @@ class FatPercentageYield(models.Model):
 			category_obj=Composition.objects.get(category=self.category,issue=self.issue,method=self.method)
 
 			category_obj.save()
+
 		except Exception as e:
 			print "FatPercentageYield Exception:",e
 
@@ -171,7 +174,7 @@ class ActualSale(models.Model):
 	month=models.PositiveSmallIntegerField(choices=MONTHS.items())
 	product=models.ForeignKey('Product',on_delete=models.CASCADE)
 	sales=models.PositiveIntegerField()
-	diary=models.ForeignKey('Diary',on_delete=models.CASCADE)
+	diary=models.ForeignKey('Diary',on_delete=models.CASCADE,verbose_name = 'dairy')
 
 	class Meta:
 		unique_together = ('month', 'product','diary',)
@@ -210,11 +213,11 @@ class ActualSale(models.Model):
 
 
 class ActualStockin(models.Model):
-	diary=models.ForeignKey('Diary',on_delete=models.CASCADE)
+	diary=models.ForeignKey('Diary',on_delete=models.CASCADE,verbose_name = 'dairy')
 	month=models.PositiveSmallIntegerField(choices=MONTHS.items())
 	product=models.ForeignKey('Product',on_delete=models.CASCADE)
 	quantity=models.PositiveIntegerField()
-	from_diary=models.ForeignKey('Diary',on_delete=models.CASCADE,related_name="fromDiary")
+	from_diary=models.ForeignKey('Diary',on_delete=models.CASCADE,related_name="fromDiary",verbose_name = 'from dairy')
 
 	class Meta:
 		unique_together = ('diary', 'month','product','from_diary',)
@@ -309,7 +312,7 @@ class ProductCategoryGrowthFactor(models.Model):
 	category=models.ForeignKey('Category',on_delete=models.CASCADE)
 	growth_factor=models.DecimalField(max_digits=8,decimal_places=4)
 	month=models.PositiveSmallIntegerField(choices=MONTHS.items())
-	diary=models.ForeignKey('Diary',on_delete=models.CASCADE)
+	diary=models.ForeignKey('Diary',on_delete=models.CASCADE,verbose_name = 'dairy')
 	class Meta:
 		unique_together = ('category', 'month','diary',)
 	def __str__(self):
@@ -318,7 +321,7 @@ class ProductCategoryGrowthFactor(models.Model):
 
 class ProductConfiguration(models.Model):
 	product=models.ForeignKey('Product',on_delete=models.CASCADE)
-	diary=models.ForeignKey('Diary',on_delete=models.CASCADE)
+	diary=models.ForeignKey('Diary',on_delete=models.CASCADE,verbose_name = 'dairy')
 	class Meta:
 		unique_together = ('product', 'diary',)
 	def __str__(self):
@@ -327,7 +330,7 @@ class ProductConfiguration(models.Model):
 class ActualWMProcurement(models.Model):
 	month=models.PositiveSmallIntegerField(choices=MONTHS.items())
 	procurement=models.DecimalField(max_digits=20,decimal_places=2,validators=[validate_positive])
-	diary=models.ForeignKey('Diary',on_delete=models.CASCADE)
+	diary=models.ForeignKey('Diary',on_delete=models.CASCADE,verbose_name = 'dairy')
 	class Meta:
 		unique_together = ('month', 'diary',)
 	def __str__(self):
@@ -348,13 +351,30 @@ class ActualWMProcurement(models.Model):
 class ProcurementGrowthFactor(models.Model):
 	month=models.PositiveSmallIntegerField(choices=MONTHS.items())
 	growth_factor=models.DecimalField(max_digits=8,decimal_places=4)
-	diary=models.ForeignKey('Diary',on_delete=models.CASCADE)
+	diary=models.ForeignKey('Diary',on_delete=models.CASCADE,verbose_name = 'dairy')
 	class Meta:
 		unique_together = ('month', 'diary',)
 	def __str__(self):
 		return MONTHS[self.month]+"-"+self.diary.name
 class UserDiaryLink(models.Model):
-	diary=models.ForeignKey('Diary',on_delete=models.CASCADE)
+	diary=models.ForeignKey('Diary',on_delete=models.CASCADE,verbose_name = 'dairy')
 	user = models.OneToOneField(User, on_delete=models.CASCADE,primary_key=True)
 	def __str__(self):
 		return self.user.username
+
+class IssueRequirement(models.Model):
+	diary=models.ForeignKey('Diary',on_delete=models.CASCADE,verbose_name = 'dairy')
+	month = models.PositiveSmallIntegerField(choices=MONTHS.items())
+	issue=models.ForeignKey('Issue',on_delete=models.CASCADE)
+	requirement=models.DecimalField(max_digits=20,decimal_places=6)
+	def __str__(self):
+		return str(self.diary.name)+"-"+str(MONTHS[self.month])+"-"+str(self.issue.name)+"-"+str(self.requirement)
+
+class InterStockMilkTransferOrder(models.Model):
+	from_diary=models.ForeignKey('Diary',on_delete=models.CASCADE,related_name="from_Diary",verbose_name = 'from dairy')
+	to_diary=models.ForeignKey('Diary',on_delete=models.CASCADE,verbose_name = 'dairy')
+	priority=models.PositiveSmallIntegerField()
+	class Meta:
+		unique_together = ('from_diary', 'to_diary',)
+	def __str__(self):
+		return str(self.from_diary.name)+"->"+str(self.to_diary.name)+"-"+str(self.priority)

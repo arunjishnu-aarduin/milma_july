@@ -25,6 +25,34 @@
     <link href={% static 'master/css/animate.css' %} rel="stylesheet">
     <link href={% static 'master/css/style.css' %} rel="stylesheet">
 
+
+    <script>
+
+ $(document).ready(function (){
+
+		 // Bind normal buttons
+		 var l = Ladda.bind('.ladda-button-demo');
+
+		 l.click(function(){
+
+				 // Start loading
+				 l.ladda( 'start' );
+
+				 // Timeout example
+				 // Do something in backend and then stop ladda
+				 setTimeout(function(){
+						 l.ladda('stop');
+				 },2000)
+
+
+		 });
+
+ });
+
+
+ </script>
+
+
 </head>
 
 <body class="gray-bg">
@@ -74,7 +102,7 @@
             <form method="post">
               {% csrf_token %}
               {{ form.as_p }}
-              <button type="submit">Login</button>
+              <button class="ladda-button ladda-button-demo btn btn-primary"  data-style="zoom-in">Login</button>
             </form>
 
         </div>

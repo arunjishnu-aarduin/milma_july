@@ -12,6 +12,7 @@ VARIANT_CHOICES = (
 	('mg', 'mg'),
     ('L', 'L'),
     ('ml', 'ml'),
+    ('g','g'),
 
 )
 
@@ -177,11 +178,12 @@ class IssueRequirementFormBasicUnion(forms.ModelForm):
 class IssueRequirementFormUnion(forms.ModelForm):
 
     Diary_Choice=Diary.objects.all()
-    diary=forms.ChoiceField(choices=( (x.id, x.name) for x in Diary_Choice ))
+    dairy=forms.ChoiceField(choices=( (x.id, x.name) for x in Diary_Choice ))
     class Meta:
         model=Composition
         #fields=('issue','month',)
-        fields=('issue','diary',)
+        fields=('issue','dairy',)
+
 class CategoryWiseRequirementForm(forms.ModelForm):
     class Meta:
         model=ProductCategoryGrowthFactor
@@ -201,3 +203,7 @@ class CategoryWiseRequirementFormUnion(forms.ModelForm):
     class Meta:
         model=ProductCategoryGrowthFactor
         fields=('month','category','diary')
+class MonthOnlyForm(forms.ModelForm):
+    class Meta:
+        model=ProcurementGrowthFactor
+        fields=('month',)

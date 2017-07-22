@@ -11,6 +11,8 @@ urlpatterns=[
     url(r'^issuerequirementUnion/',views.issuerequirementUnion,name='issuerequirementUnion'),
     url(r'^basicRequirement/',views.basicRequirement,name='basicRequirement'),
     url(r'^basicRequirementUnion/',views.basicRequirementUnion,name='basicRequirementUnion'),
+    url(r'^interStockMilkTransferUnion/',views.interStockMilkTransferUnion,name='interStockMilkTransferUnion'),
+
     url(r'^basicRequirementUnionDiaryWise/',views.basicRequirementUnionDiaryWise,name='basicRequirementUnionDiaryWise'),
 
     url(r'^logout/$', auth_views.logout, {'next_page': '/login/'}, name='logout'),

@@ -1,5 +1,6 @@
 from .models import *
 from django.contrib import messages
+import timeit
 def getMethodPercentage(category,method):
 	method_list=category.distinctMethodList
 	method_percentage_list=MethodPercentage.objects.filter(category=category,method=method)
@@ -22,6 +23,8 @@ def requireIssue(category,sale_in_unit):
 	# print "Category:"+str(category)+"  sale in unit:"+str(sale_in_unit)
 
 	method_list=Composition.objects.filter(category=category).values('method').distinct()
+
+
 
 	global target_unit
 	global target_inner
@@ -68,8 +71,8 @@ def requireIssue(category,sale_in_unit):
 					pass
 				# print "\t\t\ttarget_inner",target_inner
 
-			else :
-				 print "\t\t\t\tnot match      "+str(composition.issue)
+			# else :
+			# 	 print "\t\t\t\tnot match      "+str(composition.issue)
 
 			# target_composition+=(target_unit+target_inner)
 			target_composition+=target_unit
@@ -85,7 +88,11 @@ def requireIssue(category,sale_in_unit):
 def totalIssueRequirement(month,diary,issue):
 	CategoryList=Category.objects.all()
 	month_issue_requirement=0
+
+
+	print str(MONTHS[month])
 	for category in CategoryList:
+		start = timeit.default_timer()
 		category_issue_requirement=0
 		# print category
 		global requested_issue
@@ -133,13 +140,76 @@ def totalIssueRequirement(month,diary,issue):
 		#updated on14-07-2017
 
 		category_issue_requirement+=requireIssue(category,target)
+
 		month_issue_requirement+=category_issue_requirement
 
-		# print "category_issue_requirement returned :"+str(category_issue_requirement)
+		stop = timeit.default_timer()
+
+		# print "Time-------------------" + str(stop - start)
+
+		# print str(category.name)+"category_issue_requirement returned :"+str(month_issue_requirement)+"-"+str(MONTHS[month])
 	#return { MONTHS[month]:month_issue_requirement}
+
+
+
 	m,issueasproduct=IssueasProduct(month,diary,issue)
+	# print "Issue as Product target sale-"+str(issueasproduct)
 	month_issue_requirement+=issueasproduct
+
+
+
 	return (MONTHS[month],month_issue_requirement)
+def totalIssueRequirementDB(diary,month,category):
+
+
+
+	Issue_List=Issue.objects.all()
+	for issue in Issue_List:
+
+
+		month_issue_requirement=0
+
+		category_issue_requirement=0
+
+		global requested_issue
+
+		saledetails=ActualSale.objects.filter(product__in=(Product.objects.filter(category=category)).values('code'),month=month,diary=diary)
+
+		stockindetail=ActualStockin.objects.filter(product__in=(Product.objects.filter(category=category)).values('code'),month=month,diary=diary)
+
+		stockoutdetail=ActualStockin.objects.filter(product__in=(Product.objects.filter(category=category)).values('code'),month=month,from_diary=diary)
+
+		salesum=0
+		stockout=0
+		stockin=0
+		for sale in saledetails:
+			salesum+=sale.targetSalesUnit
+		for stock in stockindetail:
+			stockin+=stock.targetStockinUnit
+
+		for stock in stockoutdetail:
+			stockout+=stock.targetStockoutUnit
+
+		target=(salesum+stockout-(stockin))
+		requested_issue=issue
+
+
+
+		#updated on14-07-2017
+
+		category_issue_requirement+=requireIssue(category,target)
+		month_issue_requirement+=category_issue_requirement
+
+
+
+		m,issueasproduct=IssueasProduct(month,diary,issue)
+		month_issue_requirement+=issueasproduct
+		print  "month issue"+str(month_issue_requirement)
+		obj, created = IssueRequirement.objects.update_or_create(
+				diary=diary, month=month, issue=issue,
+				defaults={'requirement': month_issue_requirement},
+
+			)
 
 def IssueasProduct(month,diary,issue):
 	salesum=0
@@ -172,7 +242,7 @@ def IssueasProduct(month,diary,issue):
 			stockout+=stock.targetStockoutUnit
 
 	except Exception as e:
-		print "Exception handled for Issue As Category DoesNotExist"
+		print "Exception handled for Issue As Category DoesNotExist Issue:"+str(issue)
 		pass
 	# messages.info(request, MONTHS[month]+"sale:"+str(salesum)+"stockout:"+str(stockout)+"stockin:"+str(stockin))
 
@@ -248,3 +318,21 @@ def qsmpValue(milk_product):
 	except Exception as e:
 		print "Exception handled from qsmpValue Function"
 		return 0
+def interMilkTransfer(shortage_list,surplus_list):
+
+	inter_stock_transfer_list=InterStockMilkTransferOrder.objects.all()
+	for item in inter_stock_transfer_list:
+		from_diary= str(item.from_diary.name)
+		to_diary=str(item.to_diary.name)
+		if item.priority!=1:
+			if from_diary in surplus_list.keys() and to_diary in shortage_list.keys():
+				if surplus_list[from_diary]> shortage_list[to_diary] and shortage_list[to_diary]!=0:
+					difference=surplus_list[from_diary]-shortage_list[to_diary]
+					surplus_list[from_diary]-=difference
+					shortage_list[to_diary]-=difference
+					print str(surplus_list)
+					print str(shortage_list)
+
+
+	print str(shortage_list)
+	print str(surplus_list)
