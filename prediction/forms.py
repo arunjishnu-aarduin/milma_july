@@ -164,12 +164,14 @@ class IssueRequirementForm(forms.ModelForm):
         #fields=('issue','month',)
         fields=('issue',)
 class IssueRequirementFormBasic(forms.Form):
-    # month=forms.ChoiceField(choices=MONTHS.items())
-    Issue_Choice=Issue.objects.filter(type='3').exclude(name__in=['ADA','SUGAR'])
+
+    # Issue_Choice=Issue.objects.filter(type='3').exclude(name__in=['ADA','SUGAR'])
+    Issue_Choice=Issue.objects.filter(type='3',name__in=['WM','CREAM','SMP'])
     issue=forms.ChoiceField(choices=( (x.id, x.name) for x in Issue_Choice ))
 class IssueRequirementFormBasicUnion(forms.ModelForm):
         #month=forms.ChoiceField(choices=MONTHS.items())
-    Issue_Choice=Issue.objects.filter(type='3').exclude(name__in=['ADA','SUGAR'])
+    # Issue_Choice=Issue.objects.filter(type='3').exclude(name__in=['ADA','SUGAR'])
+    Issue_Choice = Issue.objects.filter(type='3', name__in=['WM', 'CREAM', 'SMP'])
     issue=forms.ChoiceField(choices=( (x.id, x.name) for x in Issue_Choice ))
     class Meta:
         model=ProcurementGrowthFactor
@@ -207,3 +209,14 @@ class MonthOnlyForm(forms.ModelForm):
     class Meta:
         model=ProcurementGrowthFactor
         fields=('month',)
+class GeneralCalculationForm(forms.ModelForm):
+    Calculation_Choice=GeneralCalculation.objects.all().order_by('code')
+    calculation_Name=forms.ChoiceField(choices=((x.code,x.name) for x in Calculation_Choice))
+    class Meta:
+        model=GeneralCalculation
+        fields=('calculation_Name','value',)
+
+class ConfigurationAttributesForm(forms.ModelForm):
+    class Meta:
+        model=ConfigurationAttribute
+        fields=('financial_Year',)

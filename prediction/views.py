@@ -14,10 +14,11 @@ from django.contrib import messages
 from django.contrib.auth.decorators import user_passes_test
 from django.template import RequestContext
 from collections import OrderedDict
-import time
+
 from threading import Thread
 import timeit
-#Thread Function
+import time
+
 
 
 
@@ -67,6 +68,8 @@ def diaryNew(request):
 	else:
 		form = DiaryForm()
 	return render(request, 'prediction/all_new.html', {'form': form,'name':"Diary"})
+
+
 
 @login_required
 @user_passes_test(group_check_diary)
@@ -123,6 +126,8 @@ def issuerequirement(request):
 		form = IssueRequirementForm()
 	#return render(request, 'prediction/issue_requirement.html', {'form': form})
 	return render(request, 'prediction/IssueWise.html', {'form': form})
+
+
 @login_required
 @user_passes_test(group_check_diary)
 def basicRequirement(request):
@@ -142,19 +147,22 @@ def basicRequirement(request):
 			fwm = Issue.objects.get(name='WM').fat
 
 
-
-
 			for month in MONTHS.items():
 
 				# print month[1]
 				# messages.info(request,"issue"+str(issue)+"diary"+str(diary)+"month"+str(month[0]))
+				# start = timeit.default_timer()
 
 				ret_month,month_issue_requirement_plus_sales=totalIssueRequirement(month[0],diary,issue)
+				# stop = timeit.default_timer()
+
+				# print str(diary.name) + "---" + str(month[1]) + "  " + str(stop - start)
+
 
 				month_requirement_for_milk_issue_production=0
 				type2_issue_list=Issue.objects.filter(type='2')
 
-				start = timeit.default_timer()
+
 				for issue_item in type2_issue_list:
 
 
@@ -181,7 +189,7 @@ def basicRequirement(request):
 							else:
 								composition_ratio_derived = qwmValue(issue_item) / (
 									(qwmValue(issue_item)-qcValue(issue_item) )  + qsmpValue(issue_item))
-							# messages.info(request, "Month" + str(month[1]) + " Issue" + str(issue_item) + " Qsmp:" + str(
+							# messages.info(request, "Month-" + str(month[1]) + " Issue-" + str(issue_item) + " Qsmp:" + str(
 							# 	qsmpValue(issue_item)) + " Qc:" + str(qcValue(issue_item)) + " Qwm:" + str(
 							# 	qwmValue(issue_item)))
 						except Exception as e:
@@ -214,7 +222,7 @@ def basicRequirement(request):
 
 				# messages.info(request,"Month"+str(month[1])+"-Milk-"+str(month_requirement_for_milk_issue_production)+"-Issue-"+str(month_issue_requirement_plus_sales))
 				total_month_requirement=month_requirement_for_milk_issue_production + month_issue_requirement_plus_sales
-				stop = timeit.default_timer()
+				# stop = timeit.default_timer()
 
 				# print "Time-------------------" + str(stop - start)
 				# total_month_requirement = month_requirement_for_milk_issue_production
@@ -222,12 +230,9 @@ def basicRequirement(request):
 
 
 				total_requirement[month[1]]=total_month_requirement
-
-
-
-
-
-
+			# stop = timeit.default_timer()
+            #
+			# print str(diary.name) + "---" + str(issue.name) + "  " + str(stop - start)
 
 			return render(request, "prediction/IssueWiseBasic.html",{"issue_monthwise":total_requirement,'form':form})
 
@@ -251,6 +256,17 @@ def basicRequirementUnion(request):
 			# total_requirement_union={}
 
 			fwm = Issue.objects.get(name='WM').fat
+
+
+
+			# try:
+			# 	Config_Attribute_obj=ConfigurationAttribute.objects.first()
+			# 	issue_requirement_change_status=Config_Attribute_obj.issue_requirement_change_status
+			# except Exception as e:
+			# 	print "Exception Due to Configuration Attribute Not Entered-269"
+			# 	issue_requirement_change_status=False
+
+
 			for month in MONTHS.items():
 				print month[1]
 				diary_list=Diary.objects.all()
@@ -258,17 +274,42 @@ def basicRequirementUnion(request):
 				for diary in diary_list:
 
 					ret_month,month_issue_requirement_plus_sales=totalIssueRequirement(month[0],diary,issue)
+
+
+
+					# if issue_requirement_change_status:
+					# 	issueRequirementDB(diary,month[0],issue)
+					# 	Issue_list = Issue.objects.filter(type='2')
+                    #
+					# 	for issue_item in Issue_list:
+					# 		issueRequirementDB(diary, month[0], issue_item)
+					# 	Config_Attribute_obj.issue_requirement_change_status=False
+					# 	Config_Attribute_obj.save()
+                    #
+                    #
+                    #
+                    #
+					# try:
+                    #
+					# 	month_issue_requirement_plus_sales = IssueRequirement.objects.get(month=month[0], diary=diary,
+					# 														   issue=issue).requirement
+					# except Exception as e:
+					# 	month_issue_requirement_plus_sales = 0
+
+
+
 					month_requirement_for_milk_issue_production=0
 					type2_issue_list=Issue.objects.filter(type='2')
+					# start = timeit.default_timer()
 					for issue_item in type2_issue_list:
 
-						# issue_ret_month,month_issue_requirement=totalIssueRequirement(month[0],diary,issue_item)
+						issue_ret_month,month_issue_requirement=totalIssueRequirement(month[0],diary,issue_item)
 
-						try:
-
-							month_issue_requirement=IssueRequirement.objects.get(month=month[0],diary=diary,issue=issue_item).requirement
-						except Exception as e:
-							month_issue_requirement=0
+						# try:
+                        #
+						# 	month_issue_requirement=IssueRequirement.objects.get(month=month[0],diary=diary,issue=issue_item).requirement
+						# except Exception as e:
+						# 	month_issue_requirement=0
 
 						composition_ratio_derived=0
 						if issue.name == "CREAM":
@@ -311,6 +352,9 @@ def basicRequirementUnion(request):
 
 						requirement_to_produce_milk_issue=month_issue_requirement*composition_ratio_derived
 						month_requirement_for_milk_issue_production+=requirement_to_produce_milk_issue
+					# stop = timeit.default_timer()
+
+					# print str(month[1]) + "   Time of"+ str(diary.name) + " "+ str(stop - start)
 					total_month_requirement=month_requirement_for_milk_issue_production + month_issue_requirement_plus_sales
 					# total_month_requirement = month_requirement_for_milk_issue_production
 
@@ -332,6 +376,9 @@ def basicRequirementUnion(request):
 
 	#return render(request, 'prediction/issue_requirement.html', {'form': form})
 	return render(request, 'prediction/IssueWiseBasicUnion.html', {'form': form})
+
+
+
 @login_required
 @user_passes_test(group_check_union)
 def basicRequirementUnionDiaryWise(request):
@@ -356,17 +403,20 @@ def basicRequirementUnionDiaryWise(request):
 
 				# print month[1]
 				ret_month,month_issue_requirement_plus_sales=totalIssueRequirement(month[0],diary,issue)
+
+
+
 				month_requirement_for_milk_issue_production=0
 				type2_issue_list=Issue.objects.filter(type='2')
 				for issue_item in type2_issue_list:
 
-					try:
-
-						month_issue_requirement = IssueRequirement.objects.get(month=month[0], diary=diary,
-																			   issue=issue_item).requirement
-					except Exception as e:
-						month_issue_requirement = 0
-					# issue_ret_month,month_issue_requirement=totalIssueRequirement(month[0],diary,issue_item)
+					# try:
+                    #
+					# 	month_issue_requirement = IssueRequirement.objects.get(month=month[0], diary=diary,
+					# 														   issue=issue_item).requirement
+					# except Exception as e:
+					# 	month_issue_requirement = 0
+					issue_ret_month,month_issue_requirement=totalIssueRequirement(month[0],diary,issue_item)
 
 					composition_ratio_derived=0
 					if issue.name == "CREAM":
@@ -524,6 +574,9 @@ def productNew(request):
 	else:
 		form=ProductForm()
 	return render(request,'prediction/Product.html',{'form':form,'productList':productList})
+
+
+
 @login_required
 @user_passes_test(group_check_union)
 def issueNew(request):
@@ -561,6 +614,12 @@ def compositionNew(request):
 
 					Composition.objects.get(category=form.cleaned_data["category"],method=form.cleaned_data["method"],issue=form.cleaned_data["issue"]).delete()
 					messages.info(request, "Successfully Deleted")
+					# try:
+					# 	Config_Attribute_obj = ConfigurationAttribute.objects.first()
+					# 	Config_Attribute_obj.issue_requirement_change_status = True
+					# 	Config_Attribute_obj.save()
+					# except Exception as e:
+					# 	print "Exception Handled At 614"
 				except Exception as e:
 					messages.info(request, "Deletion Failed:Not Exist")
 
@@ -580,10 +639,20 @@ def compositionNew(request):
 					defaults={'ratio':data['ratio']},
 
 				)
+			# try:
+			# 	Config_Attribute_obj = ConfigurationAttribute.objects.first()
+			# 	Config_Attribute_obj.issue_requirement_change_status = True
+			# 	Config_Attribute_obj.save()
+			# except Exception as e:
+			# 	print "Exception Handled At 634"
+
+
 			return redirect(compositionNew)
 	else:
 		form=CompositionForm()
 	return render(request,'prediction/Composition.html',{'form':form,'compositionList':compositionList})
+
+
 @login_required
 @user_passes_test(group_check_union)
 def methodpercentageNew(request):
@@ -598,6 +667,12 @@ def methodpercentageNew(request):
 
 					MethodPercentage.objects.get(category=form.cleaned_data["category"],method=form.cleaned_data["method"]).delete()
 					messages.info(request, "Successfully Deleted")
+					# try:
+					# 	Config_Attribute_obj = ConfigurationAttribute.objects.first()
+					# 	Config_Attribute_obj.issue_requirement_change_status = True
+					# 	Config_Attribute_obj.save()
+					# except Exception as e:
+					# 	print "Exception Handled At 662"
 				except Exception as e:
 					messages.info(request, "Deletion Failed:Not Exist")
 
@@ -614,6 +689,12 @@ def methodpercentageNew(request):
 					defaults={'percentage':data['percentage']},
 
 				)
+			# try:
+			# 	Config_Attribute_obj = ConfigurationAttribute.objects.first()
+			# 	Config_Attribute_obj.issue_requirement_change_status = True
+			# 	Config_Attribute_obj.save()
+			# except Exception as e:
+			# 	print "Exception Handled At 677"
 			return redirect("methodpercentageNew")
 	else:
 		form=MethodPercentageForm()
@@ -633,6 +714,12 @@ def fatPercentageYield(request):
 
 					FatPercentageYield.objects.get(category=form.cleaned_data["category"],issue=form.cleaned_data["issue"],method=form.cleaned_data["method"]).delete()
 					messages.info(request, "Successfully Deleted")
+					# try:
+					# 	Config_Attribute_obj = ConfigurationAttribute.objects.first()
+					# 	Config_Attribute_obj.issue_requirement_change_status = True
+					# 	Config_Attribute_obj.save()
+					# except Exception as e:
+					# 	print "Exception Handled At 703"
 				except Exception as e:
 					messages.info(request, "Deletion Failed:Not Exist")
 
@@ -652,6 +739,12 @@ def fatPercentageYield(request):
 					 defaults={'percentage':data['percentage']},
 
 			)
+			# try:
+			# 	Config_Attribute_obj = ConfigurationAttribute.objects.first()
+			# 	Config_Attribute_obj.issue_requirement_change_status = True
+			# 	Config_Attribute_obj.save()
+			# except Exception as e:
+			# 	print "Exception Handled At 722"
 		return redirect(fatPercentageYield)
 	else:
 		form=FatPercentageYieldForm()
@@ -721,6 +814,8 @@ def growthFactorEntry(request):
 				try:
 					ProductCategoryGrowthFactor.objects.get(month=form.cleaned_data["month"],diary=diary,category=form.cleaned_data["category"]).delete()
 					messages.info(request, "Successfully Deleted")
+					# t = Thread(target=totalIssueRequirementDB, args=(diary, form.cleaned_data['month'], form.cleaned_data['category']))
+					# t.start()
 				except Exception as e:
 					messages.info(request, "Deletion Failed:Not Exist")
 
@@ -734,6 +829,8 @@ def growthFactorEntry(request):
 					defaults={'growth_factor':data['growth_factor']},
 
 				)
+			# t = Thread(target=totalIssueRequirementDB, args=(diary, data['month'],data['category'] ))
+			# t.start()
 			return redirect("/growthfactorentry/#product")
 		if form_procurement.is_valid():
 			data = form_procurement.cleaned_data
@@ -802,6 +899,8 @@ def growthFactorEntryUnion(request):
 				try:
 					ProductCategoryGrowthFactor.objects.get(month=form.cleaned_data["month"],diary=form.cleaned_data["diary"],category=form.cleaned_data["category"]).delete()
 					messages.info(request, "Successfully Deleted")
+					# t = Thread(target=totalIssueRequirementDB, args=(form.cleaned_data['diary'], form.cleaned_data['month'], form.cleaned_data['category']))
+					# t.start()
 				except Exception as e:
 					messages.info(request, "Deletion Failed:Not Exist")
 
@@ -815,6 +914,9 @@ def growthFactorEntryUnion(request):
 					defaults={'growth_factor':data['growth_factor']},
 
 				)
+			# t = Thread(target=totalIssueRequirementDB, args=(data['diary'], data['month'],data['category'] ))
+			# t.start()
+
 			return redirect("/growthfactorentryUnion/#product")
 		if form_procurement.is_valid():
 			data = form_procurement.cleaned_data
@@ -926,6 +1028,8 @@ def productConfiguration(request):
 	else:
 		form=ProductConfigurationForm()
 	return render(request,'prediction/ProductConfiguration.html',{'form':form,'productConfigurationList':productConfigurationList})
+
+
 @login_required
 @user_passes_test(group_check_diary)
 def actualYearEntry(request):
@@ -968,6 +1072,10 @@ def actualYearEntry(request):
 				try:
 					ActualSale.objects.get(diary=diary,month=form_sale.cleaned_data["month"],product=form_sale.cleaned_data["product"]).delete()
 					messages.info(request, "Successfully Deleted")
+					# t = Thread(target=totalIssueRequirementDB,
+					# 		   args=(diary, form_sale.cleaned_data['month'],
+					# 				 form_sale.cleaned_data["product"].category))
+					# t.start()
 				except Exception as e:
 					messages.info(request, "Deletion Failed:Not Exist")
 
@@ -981,6 +1089,10 @@ def actualYearEntry(request):
 					defaults={'sales':data['sales']},
 
 				)
+			# t = Thread(target=totalIssueRequirementDB,
+			# 		   args=(diary, data['month'],
+			# 				 data["product"].category))
+			# t.start()
 			return redirect("/actualyearentry/#actualsale")
 
 
@@ -992,6 +1104,15 @@ def actualYearEntry(request):
 
 				try:
 					ActualStockin.objects.get(diary=diary,from_diary=form_stockin.cleaned_data["from_diary"],month=form_stockin.cleaned_data["month"],product=form_stockin.cleaned_data["product"]).delete()
+					# t = Thread(target=totalIssueRequirementDB,
+					# 		   args=(diary, form_stockin.cleaned_data['month'],
+					# 				 form_stockin.cleaned_data["product"].category))
+					# t.start()
+					# t.join()
+					# t = Thread(target=totalIssueRequirementDB,
+					# 		   args=(form_stockin.cleaned_data['from_diary'], form_stockin.cleaned_data['month'],
+					# 				 form_stockin.cleaned_data["product"].category))
+					# t.start()
 					messages.info(request, "Successfully Deleted")
 				except Exception as e:
 					messages.info(request, "Deletion Failed:Not Exist")
@@ -1009,6 +1130,15 @@ def actualYearEntry(request):
 					defaults={'quantity':data['quantity']},
 
 				)
+				# t = Thread(target=totalIssueRequirementDB,
+				# 		   args=(diary, data['month'],
+				# 				 data["product"].category))
+				# t.start()
+				# t.join()
+				# t = Thread(target=totalIssueRequirementDB,
+				# 		   args=(data['from_diary'], data['month'],
+				# 				 data["product"].category))
+				# t.start()
 			else:
 				messages.info(request,"Save failed:Product not Configured in From Diary")
 			return redirect("/actualyearentry/#actualstockin")
@@ -1079,9 +1209,9 @@ def actualYearEntryUnion(request):
 
 				try:
 					ActualSale.objects.get(diary=form_sale.cleaned_data["diary"],month=form_sale.cleaned_data["month"],product=form_sale.cleaned_data["product"]).delete()
-					t = Thread(target=totalIssueRequirementDB,
-							   args=(form_sale.cleaned_data["diary"], form_sale.cleaned_data["month"], form_sale.cleaned_data["product"].category))
-					t.start()
+					# t = Thread(target=totalIssueRequirementDB,
+					# 		   args=(form_sale.cleaned_data["diary"], form_sale.cleaned_data["month"], form_sale.cleaned_data["product"].category))
+					# t.start()
 					messages.info(request, "Successfully Deleted")
 				except Exception as e:
 					messages.info(request, "Deletion Failed:Not Exist")
@@ -1095,8 +1225,8 @@ def actualYearEntryUnion(request):
 					defaults={'sales':data['sales']},
 
 				)
-			t = Thread(target=totalIssueRequirementDB, args=(data['diary'],data['month'],data["product"].category))
-			t.start()
+			# t = Thread(target=totalIssueRequirementDB, args=(data['diary'],data['month'],data["product"].category))
+			# t.start()
 			return redirect("/actualYearEntryUnion/#actualsale")
 
 
@@ -1108,10 +1238,13 @@ def actualYearEntryUnion(request):
 
 				try:
 					ActualStockin.objects.get(diary=form_stockin.cleaned_data["diary"],from_diary=form_stockin.cleaned_data["from_diary"],month=form_stockin.cleaned_data["month"],product=form_stockin.cleaned_data["product"]).delete()
-					t = Thread(target=totalIssueRequirementDB,
-							   args=(form_stockin.cleaned_data["diary"], form_stockin.cleaned_data["month"], form_stockin.cleaned_data["product"].category))
-					t.start()
-
+					# t = Thread(target=totalIssueRequirementDB,
+					# 		   args=(form_stockin.cleaned_data['diary'], form_stockin.cleaned_data['month'], form_stockin.cleaned_data["product"].category))
+					# t.start()
+					# t.join()
+					# t = Thread(target=totalIssueRequirementDB,
+					# 		   args=(form_stockin.cleaned_data['from_diary'], form_stockin.cleaned_data['month'], form_stockin.cleaned_data["product"].category))
+					# t.start()
 					messages.info(request, "Successfully Deleted")
 
 				except Exception as e:
@@ -1125,8 +1258,11 @@ def actualYearEntryUnion(request):
 					defaults={'quantity':data['quantity']},
 
 				)
-			t = Thread(target=totalIssueRequirementDB, args=(data['diary'], data['month'], data["product"].category))
-			t.start()
+			# t = Thread(target=totalIssueRequirementDB, args=(data['diary'], data['month'], data["product"].category))
+			# t.start()
+			# t.join()
+			# t = Thread(target=totalIssueRequirementDB, args=(data['from_diary'], data['month'], data["product"].category))
+			# t.start()
 			return redirect("/actualYearEntryUnion/#actualstockin")
 
 		"""
@@ -1163,6 +1299,8 @@ def home(request):
 		return redirect(targetYear)
 	else:
 		return redirect(targetYearUnion)
+
+
 @login_required
 @user_passes_test(group_check_diary)
 def rawmaterialWise(request):
@@ -1232,8 +1370,17 @@ def rawmaterialWise(request):
 					messages.info(request, "Netvalue is zero(Stockout+Sale-Stockin=0) for "+str(category.name)+" in "+str(MONTHS[month])+" for Diary :"+str(diary.name))
 				print "target-",target_unit
 
-				specific_gravity=category.specific_gravity
-				target_unit_in_gram=target_unit*specific_gravity
+
+				#changed by adding specific gravity in Quantity functions in model
+				# specific_gravity=category.specific_gravity
+
+				# target_unit_in_gram=target_unit*specific_gravity
+
+
+
+				target_unit_in_gram = target_unit
+				# ---------------
+
 				print "target_unit_in_gram",target_unit_in_gram
 
 				method_list=category.distinctMethodList
@@ -1265,6 +1412,8 @@ def rawmaterialWise(request):
 
 
 						portion_of_target_unit_in_gram_through_this_method=target_unit_in_gram*(methodPercentage/100)
+
+
 						issues=[]
 						resultitem={"method":method,"portion_through_the_method":portion_of_target_unit_in_gram_through_this_method,"method_percentage":methodPercentage,"issue_required":issues}
 
@@ -1272,6 +1421,7 @@ def rawmaterialWise(request):
 
 						for composition in composition_list:
 							issues=[composition.issue.name,portion_of_target_unit_in_gram_through_this_method*composition.ratio]
+
 							if total.has_key(issues[0]):
 								new_composition_value=total[issues[0]]+issues[1]
 								total[issues[0]]=new_composition_value
@@ -1367,8 +1517,11 @@ def rawmaterialWiseUnion(request):
 					messages.info(request, "Netvalue is zero(Stockout+Sale-Stockin=0) for "+str(category.name)+" in "+str(MONTHS[month])+" for Diary :"+str(diary.name))
 				print "target-",target_unit
 
-				specific_gravity=category.specific_gravity
-				target_unit_in_gram=target_unit*specific_gravity
+				# specific_gravity=category.specific_gravity
+				# target_unit_in_gram=target_unit*specific_gravity
+				target_unit_in_gram=target_unit
+
+
 				print "target_unit_in_gram",target_unit_in_gram
 
 				method_list=category.distinctMethodList
@@ -1521,6 +1674,8 @@ def issuerequirementUnion(request):
 		form = IssueRequirementFormUnion()
 	#return render(request, 'prediction/issue_requirement.html', {'form': form})
 	return render(request, 'prediction/IssueWiseUnion.html', {'form': form})
+
+
 @login_required
 @user_passes_test(group_check_union)
 def interStockMilkTransferUnion(request):
@@ -1549,7 +1704,16 @@ def interStockMilkTransferUnion(request):
 			total_requirement_diary_cpd = 0
 			for diary in diary_list:
 
-				# ret_month, month_issue_requirement = totalIssueRequirement(month, diary, issue)
+				try:
+
+					month_issue_requirement_sales = IssueRequirement.objects.get(month=month, diary=diary,
+																		   issue=issue).requirement
+
+
+				except Exception as e:
+					month_issue_requirement_sales = 0
+
+
 
 				month_requirement_for_milk_issue_production = 0
 				type2_issue_list = Issue.objects.filter(type='2')
@@ -1581,8 +1745,8 @@ def interStockMilkTransferUnion(request):
 					requirement_to_produce_milk_issue = month_issue_requirement * composition_ratio_derived
 					month_requirement_for_milk_issue_production += requirement_to_produce_milk_issue
 
-				# total_month_requirement = month_requirement_for_milk_issue_production + month_issue_requirement
-				total_month_requirement = month_requirement_for_milk_issue_production
+				total_month_requirement = month_requirement_for_milk_issue_production + month_issue_requirement_sales
+				# total_month_requirement = month_requirement_for_milk_issue_production
 				total_month_procurement=0
 				try:
 					Awm_obj=ActualWMProcurement.objects.get(diary=diary, month=month)
@@ -1608,23 +1772,320 @@ def interStockMilkTransferUnion(request):
 					total_requirement_diary_cpd=total_month_requirement
 
 
-			if "KOZHIKODE" in surplus_list.keys():
-				surplus_list["KOZHIKODE"]-=total_requirement_diary_cpd
 
-				if "CENTRAL PRODUCTS" in shortage_list.keys():
-					del shortage_list["CENTRAL PRODUCTS"]
-			elif "KOZHIKODE" in shortage_list.keys():
-				shortage_list["KOZHIKODE"] -= total_requirement_diary_cpd
+			# print str(shortage_list)
+			# print str(surplus_list)
 
-				if "CENTRAL PRODUCTS" in shortage_list.keys():
-					del shortage_list["CENTRAL PRODUCTS"]
+			after_transfer_value,inter_stock_transfer=interMilkTransfer(shortage_list,surplus_list,total_requirement_diary_cpd,diary_list)
 
-			interMilkTransfer(shortage_list,surplus_list)
+			if after_transfer_value<0:
+				after_transfer ="Shortage"
+				after_transfer_value*=(-1)
 
-			return render(request, 'prediction/InterStockMilkTransfer.html', {'form': form,'resultitem': resultitem})
+
+				purchase_rate=GeneralCalculation.objects.get(code=8).value
+				wm_after_stock_transfer="WM Purchased:"+str('{0:.4f}'.format(after_transfer_value))+", Amount:"+str('{0:.4f}'.format(after_transfer_value*purchase_rate))
+
+
+				max_allowable_reconstitution=GeneralCalculation.objects.get(code=1).value
+			else:
+				after_transfer = "Surplus"
+
+				sale_percentage=GeneralCalculation.objects.get(code=4).value
+				sale_rate=GeneralCalculation.objects.get(code=9).value
+				wm_after_stock_transfer="WM Sold:"+str('{0:.4f}'.format(after_transfer_value*sale_percentage/100))+", Amount:"+str('{0:.4f}'.format(after_transfer_value*sale_rate))
+
+
+				csm_convert_percentage=GeneralCalculation.objects.get(code=5).value
+				wm_converted_to_csm=after_transfer_value*csm_convert_percentage/100
+
+
+				csm_sale_percentage= GeneralCalculation.objects.get(code=6).value
+				csm_sale_rate=GeneralCalculation.objects.get(code=10).value
+				csm_sold=wm_converted_to_csm*csm_sale_percentage/100
+				csm_sold_amount=csm_sold*csm_sale_rate
+
+
+				csm_smp_conversion_percentage=GeneralCalculation.objects.get(code=7).value
+				csm_converted_to_smp=wm_converted_to_csm*csm_smp_conversion_percentage/100
+
+
+
+
+
+
+
+
+			return render(request, 'prediction/InterStockMilkTransferUnion.html', {'form': form,'resultitem': resultitem,'interstock':inter_stock_transfer,'after_transfer_value':after_transfer_value,'after_transfer':after_transfer,'wm_after_stock_transfer':wm_after_stock_transfer})
+	else:
+		form = MonthOnlyForm()
+		return render(request, 'prediction/InterStockMilkTransferUnion.html', {'form': form})
+
+@login_required
+@user_passes_test(group_check_diary)
+def interStockMilkTransfer(request):
+	if request.method == "POST":
+		form = MonthOnlyForm(request.POST)
+		if form.is_valid():
+
+			issue_wm = Issue.objects.get(name='WM')
+
+
+			issue_cream=Issue.objects.get(name='CREAM')
+
+			month = form.cleaned_data["month"]
+
+
+
+
+			resultitem = []
+
+			shortage_list=OrderedDict()
+			surplus_list=OrderedDict()
+
+
+			fwm = issue_wm.fat
+
+			diary_list = Diary.objects.all()
+			total_requirement_diary_cpd = 0
+			for diary in diary_list:
+
+
+
+				ret_month,month_issue_requirement_sales_wm = totalIssueRequirement(month, diary, issue_wm)
+
+				ret_month, month_issue_requirement_sales_cream = totalIssueRequirement(month, diary, issue_cream)
+
+
+				month_requirement_for_milk_issue_production = 0
+				type2_issue_list = Issue.objects.filter(type='2')
+
+				for issue_item in type2_issue_list:
+
+					# issue_ret_month, month_issue_requirement = totalIssueRequirement(month, diary, issue_item)
+
+					try:
+
+						issue_ret_month,month_issue_requirement =totalIssueRequirement(month, diary, issue_item)
+
+
+					except Exception as e:
+						month_issue_requirement = 0
+
+					composition_ratio_derived = 0
+					if  issue_wm.name == "WM":
+						try:
+							if issue_item.fat > fwm:
+								composition_ratio_derived = qwmValue(issue_item) / (
+									qcValue(issue_item) + qwmValue(issue_item) + qsmpValue(issue_item))
+							else:
+								composition_ratio_derived = qwmValue(issue_item) / (
+									(qwmValue(issue_item) - qcValue(issue_item)) + qsmpValue(issue_item))
+						except Exception as e:
+							print "Exception handled in line no 1484"
+
+					requirement_to_produce_milk_issue = month_issue_requirement * composition_ratio_derived
+					month_requirement_for_milk_issue_production += requirement_to_produce_milk_issue
+
+
+
+				total_month_requirement_wm = month_requirement_for_milk_issue_production + month_issue_requirement_sales_wm
+
+				total_month_requirement_cream=month_requirement_for_milk_issue_production + month_issue_requirement_sales_cream
+
+				# total_month_requirement = month_requirement_for_milk_issue_production
+				total_month_procurement=0
+				try:
+					Awm_obj=ActualWMProcurement.objects.get(diary=diary, month=month)
+					total_month_procurement = Awm_obj.targetProcurement
+				except Exception as e:
+					print "Exception handled in line 1749"
+
+				difference=total_month_procurement-total_month_requirement_wm
+
+
+
+				if difference !=0:
+					type_of_difference=""
+					if difference>=0:
+						type_of_difference="Surplus"
+						surplus_list[diary.name]=difference
+					else:
+						type_of_difference="Shortage"
+						difference=difference*-1
+						shortage_list[diary.name]=difference
+
+					result = {"month":MONTHS[month],"diary":diary.name,"requirement":total_month_requirement_wm,"procurement":total_month_procurement,"difference":difference,"type":type_of_difference}
+					resultitem.append(result)
+
+				if "CPD"==diary.id:
+					total_requirement_diary_cpd=total_month_requirement_wm
+
+
+
+
+
+			# print str(shortage_list)
+			# print str(surplus_list)
+			diary = diary_of_user(request.user)
+			after_transfer_value,inter_stock_transfer=interMilkTransfer(shortage_list,surplus_list,total_requirement_diary_cpd,diary_list,diary)
+
+			if after_transfer_value<0:
+				after_transfer ="Shortage"
+				after_transfer_value*=(-1)
+				procurement_of_month=0
+				try:
+					Awm_obj = ActualWMProcurement.objects.get(diary=diary, month=month)
+					procurement_of_month = Awm_obj.targetProcurement
+				except Exception as e:
+					print "Exception handled in line 1791"
+
+				max_allowable_reconstitution = procurement_of_month*GeneralCalculation.objects.get(code=1).value/100
+
+				reconstitution_amount=0
+
+
+				if max_allowable_reconstitution<after_transfer_value:
+					wm_purchase=after_transfer_value-max_allowable_reconstitution
+					purchase_rate=GeneralCalculation.objects.get(code=8).value
+					wm_after_stock_transfer="WM Purchased:"+str('{0:.4f}'.format(wm_purchase))+", Amount:"+str('{0:.4f}'.format(wm_purchase*purchase_rate))
+
+					reconstitution_amount=max_allowable_reconstitution
+				else:
+					reconstitution_amount = max_allowable_reconstitution - after_transfer_value
+
+				if reconstitution_amount!=0:
+
+					reconstitution_from_smp=reconstitution_amount*GeneralCalculation.objects.get(code=2).value/100
+
+					reconstitution_from_wmp=reconstitution_amount*GeneralCalculation.objects.get(code=3).value/100
+
+					quantity_of_water=100-qcReconstitutionValueSmp()-qsmpReconstitutionValueSmp()
+
+					cream_ratio=qcReconstitutionValueSmp()/100
+					smp_ratio=qsmpReconstitutionValueSmp()/100
+					water_ratio=reconstitution_from_smp*quantity_of_water/100
+
+					smp_total=reconstitution_from_smp*smp_ratio
+					cream_total=reconstitution_amount*cream_ratio
+					water_total=reconstitution_amount*water_ratio
+
+
+			else:
+				after_transfer = "Surplus"
+
+				sale_percentage=GeneralCalculation.objects.get(code=4).value
+				sale_rate=GeneralCalculation.objects.get(code=9).value
+
+				wm_for_sale=after_transfer_value*sale_percentage/100
+
+
+
+				wm_after_stock_transfer="WM Sold:"+str('{0:.4f}'.format(wm_for_sale))+", Amount:"+str('{0:.4f}'.format(wm_for_sale*sale_rate))
+
+
+				csm_convert_percentage=GeneralCalculation.objects.get(code=5).value
+				wm_converted_to_csm=after_transfer_value*csm_convert_percentage/100
+
+				csm_wm_ratio=qwmReconstitutionValueCSM()/(qwmReconstitutionValueCSM()-qcReconstitutionValueCSM())
+				csm_cream_ratio=-1*(qcReconstitutionValueCSM()/(qwmReconstitutionValueCSM()-qcReconstitutionValueCSM()))
+
+
+				csm_wm_amount=wm_converted_to_csm*csm_wm_ratio
+				csm_cream_amount=wm_converted_to_csm*csm_cream_ratio
+
+
+				scsm=scsmCalculation()
+
+				wm_after_stock_transfer+=" SNF Percentage of CSM:"+str('{0:.4f}'.format(scsm))
+
+
+				csm_sale_percentage= GeneralCalculation.objects.get(code=6).value
+				csm_sale_rate=GeneralCalculation.objects.get(code=10).value
+				csm_sold=wm_converted_to_csm*csm_sale_percentage/100
+				csm_sold_amount=csm_sold*csm_sale_rate
+
+				wm_after_stock_transfer+=" CSM Sold:"+str('{0:.4f}'.format(csm_sold))+", Amount:"+str('{0:.4f}'.format(csm_sold_amount))
+
+
+				csm_smp_conversion_percentage=GeneralCalculation.objects.get(code=7).value
+				csm_converted_to_smp=wm_converted_to_csm*csm_smp_conversion_percentage/100
+
+				wm_after_stock_transfer+=" CSM Converted to SMP:"+str('{0:.4f}'.format(csm_converted_to_smp))
+
+
+
+			return render(request, 'prediction/InterStockMilkTransfer.html',
+						  {'form': form, 'resultitem': resultitem, 'interstock': inter_stock_transfer,
+						   'after_transfer_value': after_transfer_value, 'after_transfer': after_transfer,
+						   'wm_after_stock_transfer': wm_after_stock_transfer})
 	else:
 		form = MonthOnlyForm()
 		return render(request, 'prediction/InterStockMilkTransfer.html', {'form': form})
+
+@login_required
+@user_passes_test(group_check_union)
+def generalCalculation(request):
+	calculationList = GeneralCalculation.objects.all().order_by('code')
+	if request.method == "POST":
+		form = GeneralCalculationForm(request.POST)
+		if form.is_valid():
+			data = form.cleaned_data
+
+
+			calculation_obj = GeneralCalculation.objects.get(code=data['calculation_Name'])
+			calculation_obj.value=data['value']
+			if data['calculation_Name']=='2':
+				if GeneralCalculation.objects.get(code='3').value!=0 and data['value']!=0:
+					if (data['value']+GeneralCalculation.objects.get(code='3').value)==100:
+						calculation_obj.save()
+					else:
+						messages.info(request,"Percentage Of Reconstitution(WMP+SMP) Must Be 100")
+				else:
+					calculation_obj.save()
+			elif data['calculation_Name']=='3':
+				if data['value']!=0 and GeneralCalculation.objects.get(code='2').value!=0:
+					if (data['value'] + GeneralCalculation.objects.get(code='2').value) == 100:
+						calculation_obj.save()
+					else:
+						messages.info(request,"Percentage Of Reconstitution(WMP+SMP) Must Be 100")
+				else:
+					calculation_obj.save()
+
+			else:
+				calculation_obj.save()
+			return redirect(generalCalculation)
+	else:
+		form = GeneralCalculationForm()
+	return render(request, 'prediction/GeneralCalculation.html', {'form':form,'calculationList': calculationList})
+
+@login_required
+@user_passes_test(group_check_union)
+def financialYear(request):
+	current_finyear = ConfigurationAttribute.objects.first()
+	if request.method == "POST":
+		form = ConfigurationAttributesForm(request.POST)
+		if form.is_valid():
+			data = form.cleaned_data
+			if current_finyear:
+
+				current_finyear.financial_Year=data['financial_Year']
+				current_finyear.save()
+			else:
+				fin_obj = form.save(commit=False)
+				fin_obj.save()
+
+			return redirect(financialYear)
+	else:
+		form = ConfigurationAttributesForm()
+		next_year ="-----"
+		if current_finyear:
+
+
+			form.fields['financial_Year'].initial = current_finyear.financial_Year
+			next_year=current_finyear.financial_Year+1
+
+	return render(request, 'prediction/FinancialYear.html', {'form': form,'next_year':next_year,'next_year_plus':next_year+1})
 
 
 

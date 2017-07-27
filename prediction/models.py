@@ -8,6 +8,9 @@ from django.utils.dates import MONTHS
 from django.db.models import Sum
 from django.db.models.functions import Coalesce
 from django.contrib.auth.models import User
+import datetime
+
+
 
 
 
@@ -32,6 +35,11 @@ METHOD_CHOICES = (
 
 
 )
+#for financial year
+year_dropdown = []
+for y in range(2016, (datetime.datetime.now().year + 5)):
+    year_dropdown.append((y, y))
+
 #############################################################################################################333
 #funcions
 
@@ -340,13 +348,21 @@ class ActualWMProcurement(models.Model):
 	def growthFactor(self):
 		try:
 			procurement_growth_factor=ProcurementGrowthFactor.objects.get(month=self.month,diary=self.diary)
+
 			return procurement_growth_factor.growth_factor
 		except Exception as e:
 			print "Procurement Growth Factor not exist"
 			return 0
 	@property
 	def targetProcurement(self):
-		return (self.procurement+(self.procurement*self.growthFactor)/100)
+		try:
+			specific_gravity = Category.objects.get(name="WM").specific_gravity
+			return ((self.procurement + (self.procurement * self.growthFactor) / 100) * specific_gravity)
+		except Exception as e:
+			print "Specific Gravity Fetching Failed"
+			return (self.procurement + (self.procurement * self.growthFactor) / 100)
+
+
 
 class ProcurementGrowthFactor(models.Model):
 	month=models.PositiveSmallIntegerField(choices=MONTHS.items())
@@ -378,3 +394,27 @@ class InterStockMilkTransferOrder(models.Model):
 		unique_together = ('from_diary', 'to_diary',)
 	def __str__(self):
 		return str(self.from_diary.name)+"->"+str(self.to_diary.name)+"-"+str(self.priority)
+class GeneralCalculation(models.Model):
+	code=models.PositiveSmallIntegerField(primary_key=True)
+	name=models.CharField(max_length=100)
+	value=models.DecimalField(max_digits=12,decimal_places=4)
+	def __str__(self):
+		return str(self.code)+" "+str(self.name)+" "+str(self.value)
+class ConfigurationAttribute(models.Model):
+
+	financial_Year=models.IntegerField( choices=year_dropdown,verbose_name="")
+	issue_requirement_change_status=models.BooleanField()
+
+	def __str__(self):
+		return  str(self.financial_Year)+" Composition Status-"+str(self.issue_requirement_change_status)
+class IssueUsedAsCategoryIndirect(models.Model):
+	issue = models.ForeignKey('Issue', on_delete=models.CASCADE)
+	category = models.ForeignKey('Category', on_delete=models.CASCADE)
+
+	class Meta:
+		unique_together = ('issue', 'category',)
+
+	def __str__(self):
+		return  str(self.issue.name)+"-"+str(self.category.name)
+
+

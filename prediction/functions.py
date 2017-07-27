@@ -1,6 +1,9 @@
 from .models import *
 from django.contrib import messages
 import timeit
+
+#functions start here
+
 def getMethodPercentage(category,method):
 	method_list=category.distinctMethodList
 	method_percentage_list=MethodPercentage.objects.filter(category=category,method=method)
@@ -86,13 +89,32 @@ def requireIssue(category,sale_in_unit):
 
 
 def totalIssueRequirement(month,diary,issue):
-	CategoryList=Category.objects.all()
+
+
+	# CategoryList=Category.objects.all()
+	#Only Category List Changed on 27-07-2017
+	CategoryListFromComposition=Composition.objects.filter(issue=issue)
+
+
+
+	IssueUsedAsCategoryIndirectList=IssueUsedAsCategoryIndirect.objects.filter(issue=issue)
+	categoryList=[]
+
+	for item in CategoryListFromComposition:
+		if item.category not in  categoryList:
+			categoryList.append(item.category)
+	for item in IssueUsedAsCategoryIndirectList:
+		if item.category not in categoryList:
+			categoryList.append(item.category)
+
+
+	# print "category list direct + indirect ----",categoryList
+
 	month_issue_requirement=0
+	#--Changes End here
+	# start = timeit.default_timer()
+	for category in categoryList:
 
-
-	print str(MONTHS[month])
-	for category in CategoryList:
-		start = timeit.default_timer()
 		category_issue_requirement=0
 		# print category
 		global requested_issue
@@ -143,9 +165,7 @@ def totalIssueRequirement(month,diary,issue):
 
 		month_issue_requirement+=category_issue_requirement
 
-		stop = timeit.default_timer()
 
-		# print "Time-------------------" + str(stop - start)
 
 		# print str(category.name)+"category_issue_requirement returned :"+str(month_issue_requirement)+"-"+str(MONTHS[month])
 	#return { MONTHS[month]:month_issue_requirement}
@@ -155,6 +175,9 @@ def totalIssueRequirement(month,diary,issue):
 	m,issueasproduct=IssueasProduct(month,diary,issue)
 	# print "Issue as Product target sale-"+str(issueasproduct)
 	month_issue_requirement+=issueasproduct
+	# stop = timeit.default_timer()
+    #
+	# print str(month) + "-" + str(diary.name) + " Time-------------------" + str(issue.name) + "  " + str(stop - start)
 
 
 
@@ -162,7 +185,7 @@ def totalIssueRequirement(month,diary,issue):
 def totalIssueRequirementDB(diary,month,category):
 
 
-
+	start = timeit.default_timer()
 	Issue_List=Issue.objects.all()
 	for issue in Issue_List:
 
@@ -204,12 +227,28 @@ def totalIssueRequirementDB(diary,month,category):
 
 		m,issueasproduct=IssueasProduct(month,diary,issue)
 		month_issue_requirement+=issueasproduct
-		print  "month issue"+str(month_issue_requirement)
+		# print  "month issue"+str(month_issue_requirement)
 		obj, created = IssueRequirement.objects.update_or_create(
 				diary=diary, month=month, issue=issue,
 				defaults={'requirement': month_issue_requirement},
 
 			)
+	stop = timeit.default_timer()
+
+	print str(diary.name) + "Time-------------------" + str(stop - start)
+
+
+
+
+def issueRequirementDB(diary,month,issue):
+
+	IssueList=Composition.objects.filter(issue=issue)
+
+	for item in IssueList:
+		totalIssueRequirementDB(diary,month,item.category)
+
+
+
 
 def IssueasProduct(month,diary,issue):
 	salesum=0
@@ -257,14 +296,22 @@ def IssueasProduct(month,diary,issue):
 def qcValue(milk_product):
 	try:
 		fc=Issue.objects.get(name='CREAM').fat
+		sc = Issue.objects.get(name='CREAM').snf
 		fwm=Issue.objects.get(name='WM').fat
+		swm=Issue.objects.get(name='WM').snf
 		mf=milk_product.fat
+		ms = milk_product.snf
+		qwm=qwmValue(milk_product)
+		qsmp=qsmpValue(milk_product)
+		fsmp = Issue.objects.get(name='SMP').fat
+		ssmp = Issue.objects.get(name='SMP').snf
+
 
 		if (mf>fwm):
-			qc=(fwm*((fc-fwm))-(mf*(fc-fwm)))/((2*mf)-(fwm)-(fc))
-		else:
-			qc=(fwm*((fc-fwm))-(mf*(fc-fwm)))/(fc-fwm)
+			qc=-1*(((qwm*(mf-fwm))/(mf-fc))+((qsmp*(mf-fsmp))/(mf-fc)))
 
+		else:
+			qc=((qwm*(ms-swm))/(ms-sc))+((qsmp*(ms-ssmp))/(ms-sc))
 
 		return qc
 	except Exception as e:
@@ -276,63 +323,329 @@ def qwmValue(milk_product):
 		fc=Issue.objects.get(name='CREAM').fat
 		fwm=Issue.objects.get(name='WM').fat
 
-		qc=qcValue(milk_product)
-		qwm=fc-fwm+qc
+
+		qwm=fc-fwm
 		return qwm
 	except Exception as e:
 		 print "Exception handled from qwmValue Function"
 		 return 0
 
-def kValue(milk_product):
-	try:
-		qc=qcValue(milk_product)
-		qwm=qwmValue(milk_product)
-		swm=Issue.objects.get(name='WM').snf
-		sc=Issue.objects.get(name='CREAM').snf
-		mf = milk_product.fat
-		fwm = Issue.objects.get(name='WM').fat
 
-		if (mf>fwm):
-			k = ((qwm * swm) + (qc * sc)) / (qwm + qc)
-		else:
-			k=((qwm*swm)-(qc*sc))/(qwm-qc)
-		return k
-	except Exception as e:
-		print "Exception handled from kValue Function"
-		return 0
 
 def qsmpValue(milk_product):
 	try:
 		qwm=qwmValue(milk_product)
-		qc=qcValue(milk_product)
-		sm=milk_product.snf
+
+		ms=milk_product.snf
+		swm = Issue.objects.get(name='WM').snf
 		ssmp=Issue.objects.get(name='SMP').snf
-		k=kValue(milk_product)
+		fsmp=Issue.objects.get(name='SMP').fat
+		sc=Issue.objects.get(name='CREAM').snf
+		fc = Issue.objects.get(name='CREAM').fat
 		mf = milk_product.fat
 		fwm = Issue.objects.get(name='WM').fat
-		if(mf>fwm):
-			qsmp=(qwm+qc)*((sm-k)/(ssmp-sm))
-		else:
-			qsmp = (qwm - qc) * ((sm - k) / (ssmp - sm))
+
+
+
+
+
+
+		qsmp=qwm*((((ms-swm)*(mf-fc))-((ms-sc)*(mf-fwm)))/(((mf-fsmp)*(ms-sc))-((ms-ssmp)*(mf-fc))))
+
 		return qsmp
 	except Exception as e:
 		print "Exception handled from qsmpValue Function"
 		return 0
-def interMilkTransfer(shortage_list,surplus_list):
+
+
+def qcReconstitutionValueSmp():
+	try:
+		fc=Issue.objects.get(name='CREAM').fat
+		fwm=Issue.objects.get(name='WM').fat
+
+		qc=(fwm/fc)*100
+		return qc
+	except Exception as e:
+		print "Exception handled from qcValueReconstitution Function"
+		return 0
+def kReconstitutionValueSmp():
+	try:
+		sc = Issue.objects.get(name='CREAM').snf
+
+		k=qcReconstitutionValueSmp()*sc/100
+		return k
+	except Exception as e:
+		print "Exception handled from kValueReconstitution Function"
+		return 0
+
+def qsmpReconstitutionValueSmp():
+	try:
+		swm = Issue.objects.get(name='WM').snf
+		ssmp = Issue.objects.get(name='SMP').snf
+		qsmp=((swm-kReconstitutionValueSmp())/ssmp)*100
+		return qsmp
+	except Exception as e:
+		print "Exception handled from qsmpValueReconstitution Function"
+		return 0
+
+def qwmReconstitutionValueCSM():
+	try:
+		fc = Issue.objects.get(name='CREAM').fat
+		fwm = Issue.objects.get(name='WM').fat
+		qwm=fc-fwm
+
+		return qwm
+	except Exception as e:
+		print "Exception handled from qwmValueReconstitution(CSM) Function"
+		return 0
+def qcReconstitutionValueCSM():
+	try:
+		qwm=qwmReconstitutionValueCSM()
+		fc = Issue.objects.get(name='CREAM').fat
+		fwm = Issue.objects.get(name='WM').fat
+		fcsm=GeneralCalculation.objects.get(code=17).value
+		qc=(qwm*(fwm-fcsm))/(fc-fcsm)
+
+		return qc
+
+	except Exception as e:
+		print "Exception handled from qcValueReconstitution(CSM) Function"
+		return 0
+
+def scsmCalculation():
+	try:
+		qwm=qwmReconstitutionValueCSM()
+		swm=Issue.objects.get(name='WM').snf
+		qc=qcReconstitutionValueCSM()
+		sc=Issue.objects.get(name='CREAM').snf
+
+		scsm=((qwm*swm)-(qc*sc))/(qwm-qc)
+		return  scsm
+
+	except Exception as e:
+		print "Exception handled from scsmCalculation"
+		return 0
+
+
+def interMilkTransfer(shortage_list,surplus_list,total_requirement_diary_cpd,diaryList,current_diary):
+	resultitem = []
+
+	if total_requirement_diary_cpd>0:
+
+		if "KOZHIKODE" in surplus_list.keys():
+
+			if total_requirement_diary_cpd > surplus_list["KOZHIKODE"]:
+				surplus_difference = total_requirement_diary_cpd - surplus_list["KOZHIKODE"]
+
+				del surplus_list["KOZHIKODE"]
+				shortage_list["KOZHIKODE"] = surplus_difference
+			else:
+				surplus_list["KOZHIKODE"] -= total_requirement_diary_cpd
+
+			if "CENTRAL PRODUCTS" in shortage_list.keys():
+				del shortage_list["CENTRAL PRODUCTS"]
+		elif "KOZHIKODE" in shortage_list.keys():
+
+			# shortage_list["KOZHIKODE"] -= total_requirement_diary_cpd
+
+			shortage_list["KOZHIKODE"] += total_requirement_diary_cpd
+
+
+			shortage_list["KOZHIKODE"] = shortage_list["KOZHIKODE"]
+
+			if shortage_list["KOZHIKODE"]<0:
+				shortage_list["KOZHIKODE"]=shortage_list["KOZHIKODE"]*(-1)
+			if "CENTRAL PRODUCTS" in shortage_list.keys():
+				del shortage_list["CENTRAL PRODUCTS"]
+
+
+		result = {"fromdiary": "KOZHIKODE", "todiary": "CENTRAL PRODUCTS", "value": total_requirement_diary_cpd}
+		resultitem.append(result)
+
 
 	inter_stock_transfer_list=InterStockMilkTransferOrder.objects.all()
+
+	print str(shortage_list)
+	print str(surplus_list)
+
+
 	for item in inter_stock_transfer_list:
 		from_diary= str(item.from_diary.name)
 		to_diary=str(item.to_diary.name)
 		if item.priority!=1:
 			if from_diary in surplus_list.keys() and to_diary in shortage_list.keys():
-				if surplus_list[from_diary]> shortage_list[to_diary] and shortage_list[to_diary]!=0:
+				if surplus_list[from_diary]> shortage_list[to_diary]:
 					difference=surplus_list[from_diary]-shortage_list[to_diary]
-					surplus_list[from_diary]-=difference
-					shortage_list[to_diary]-=difference
-					print str(surplus_list)
-					print str(shortage_list)
 
+					result = {"fromdiary":from_diary,"todiary":to_diary,"value":shortage_list[to_diary]}
+					surplus_list[from_diary] = difference
+					del shortage_list[to_diary]
+					# print str(surplus_list)
+					# print str(shortage_list)
+				else:
+
+
+
+					difference=shortage_list[to_diary]-surplus_list[from_diary]
+
+
+					result = {"fromdiary": from_diary, "todiary": to_diary, "value": surplus_list[from_diary]}
+					shortage_list[to_diary] = difference
+
+					del surplus_list[from_diary]
+
+
+				resultitem.append(result)
+
+
+
+
+	value_after_stock_transfer=0
+	surplus_value=0
+	shortage_value=0
+
+	if bool(surplus_list):
+
+		for item,value in surplus_list.items():
+
+			if current_diary.name==item:
+				surplus_value +=value
+
+
+
+	if bool(shortage_list):
+		for item, value in shortage_list.items():
+			if current_diary.name == item:
+				shortage_value += value
+
+
+	value_after_stock_transfer=surplus_value-shortage_value
+
+
+
+	stock_transfer=[]
+	for diary in diaryList:
+		for item in resultitem:
+			if diary.name==item['fromdiary'] or diary.name==item['todiary']:
+				if item['fromdiary']==diary.name:
+					transfer_type="to"
+					to_or_from_diary=item['todiary']
+
+				elif item['todiary']==diary.name:
+					transfer_type="from"
+					to_or_from_diary=item['fromdiary']
+
+				result={"diary":diary.name,"type":transfer_type,"to_or_from_diary":to_or_from_diary,"value":item['value']}
+				stock_transfer.append((result))
+
+
+
+
+	# print stock_transfer
+
+	return value_after_stock_transfer,stock_transfer
+
+
+
+
+"""def interMilkTransfer(shortage_list,surplus_list,total_requirement_diary_cpd,diary):
+	resultitem = []
+
+	if total_requirement_diary_cpd>0:
+
+		if "KOZHIKODE" in surplus_list.keys():
+
+			if total_requirement_diary_cpd > surplus_list["KOZHIKODE"]:
+				surplus_difference = total_requirement_diary_cpd - surplus_list["KOZHIKODE"]
+
+				del surplus_list["KOZHIKODE"]
+				shortage_list["KOZHIKODE"] = surplus_difference
+			else:
+				surplus_list["KOZHIKODE"] -= total_requirement_diary_cpd
+
+			if "CENTRAL PRODUCTS" in shortage_list.keys():
+				del shortage_list["CENTRAL PRODUCTS"]
+		elif "KOZHIKODE" in shortage_list.keys():
+
+			shortage_list["KOZHIKODE"] -= total_requirement_diary_cpd
+			shortage_list["KOZHIKODE"] = shortage_list["KOZHIKODE"]
+
+			if shortage_list["KOZHIKODE"]<0:
+				shortage_list["KOZHIKODE"]=shortage_list["KOZHIKODE"]*(-1)
+			if "CENTRAL PRODUCTS" in shortage_list.keys():
+				del shortage_list["CENTRAL PRODUCTS"]
+
+
+		result = {"fromdiary": "KOZHIKODE", "todiary": "CENTRAL PRODUCTS", "value": total_requirement_diary_cpd}
+		resultitem.append(result)
+
+
+	inter_stock_transfer_list=InterStockMilkTransferOrder.objects.all()
 
 	print str(shortage_list)
 	print str(surplus_list)
+
+
+	for item in inter_stock_transfer_list:
+		from_diary= str(item.from_diary.name)
+		to_diary=str(item.to_diary.name)
+		if item.priority!=1:
+			if from_diary in surplus_list.keys() and to_diary in shortage_list.keys():
+				if surplus_list[from_diary]> shortage_list[to_diary]:
+					difference=surplus_list[from_diary]-shortage_list[to_diary]
+
+					result = {"fromdiary":from_diary,"todiary":to_diary,"value":shortage_list[to_diary]}
+					surplus_list[from_diary] = difference
+					del shortage_list[to_diary]
+					# print str(surplus_list)
+					# print str(shortage_list)
+				else:
+
+					difference=shortage_list[to_diary]-surplus_list[from_diary]
+
+
+					result = {"fromdiary": from_diary, "todiary": to_diary, "value": surplus_list[from_diary]}
+					shortage_list[to_diary] = difference
+
+					del surplus_list[from_diary]
+				print  result
+
+				resultitem.append(result)
+
+
+
+	value_after_stock_transfer=0
+	surplus_value=0
+	shortage_value=0
+
+	if bool(surplus_list):
+		for item,value in surplus_list.items():
+			surplus_value+=value
+	if bool(shortage_list):
+		for item, value in surplus_list.items():
+			shortage_value += value
+
+	value_after_stock_transfer=surplus_value-shortage_value
+
+	stock_transfer=[]
+
+	for item in resultitem:
+		if diary.name==item['fromdiary'] or diary.name==item['todiary']:
+			if item['fromdiary']==diary.name:
+				transfer_type="to"
+				to_or_from_diary=item['todiary']
+
+			elif item['todiary']==diary.name:
+				transfer_type="from"
+				to_or_from_diary=item['fromdiary']
+
+			result={"diary":diary.name,"type":transfer_type,"to_or_from_diary":to_or_from_diary,"value":item['value']}
+			stock_transfer.append((result))
+
+
+
+
+	# print stock_transfer
+
+	return value_after_stock_transfer,stock_transfer
+"""

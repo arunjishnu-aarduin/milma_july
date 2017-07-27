@@ -1,0 +1,169 @@
+{% extends 'master.html' %}
+{% block content %}
+																							<div>
+																							        <div class="row wrapper border-bottom white-bg page-heading">
+																							            <div class="col-lg-10">
+																							                <h2>Inter Stock Milk Transfer</h2>
+																											<form method="POST" >{% csrf_token %}
+																													{{ form.as_table }}
+																														<button type="submit" class="save btn btn-default">Find</button>
+																													</form>
+
+																							            </div>
+																							            <div class="col-lg-2">
+
+
+																							            </div>
+																							        </div>
+
+
+
+																							<!-- For table copy from here-->
+																							    <div>
+																							      <div class="wrapper wrapper-content animated fadeInRight">
+																							        <div class="row">
+
+
+																							            <div class="col-lg-12">
+																							            <div class="ibox float-e-margins">
+																							                <div class="ibox-title">
+																							                    <h5>Summary</h5>
+
+
+																							                    <div class="ibox-tools">
+																							                        <a class="collapse-link">
+																							                            <i class="fa fa-chevron-up"></i>
+																							                        </a>
+
+																							                        <a class="close-link">
+																							                            <i class="fa fa-times"></i>
+																							                        </a>
+																							                    </div>
+
+																							                </div>
+																							                <div class="ibox-content">
+
+																							                    <div class="table-responsive">
+
+																							                <table class="table table-striped table-bordered table-hover dataTables-example" >
+																																<thead>
+	 					 																										<tr>
+																																	<td>Dairy</td>
+	 					 																											<td>Month</td>
+																																	<td>Procurement</td>
+	 					 																											<td>Requirement</td>
+
+																																	<td>Difference</td>
+																																	<td>Shortage/Surplus</td>
+	 					 																										</tr>
+	 					 																									</thead>
+	 					 																									<tbody>
+	 					 																										{% for items in resultitem %}
+	 					 																										<tr>
+	 					 																										<td>{{items.diary}}</td>
+																																	<td>{{items.month}}</td>
+																																	<td>{{items.procurement|floatformat:4}}</td>
+	 					 																										<td>{{items.requirement|floatformat:4}}</td>
+
+																																	<td>{{items.difference|floatformat:4}}</td>
+																																	<td>{{items.type}}</td>
+	 					 																										</tr>
+	 					 																										{%endfor%}
+	 					 																									</tbody>
+	 					 																								</table>
+
+																							                    </div>
+
+																							                </div>
+																							            </div>
+																							        </div>
+																							        </div>
+																							      </div>
+																							    </div>
+																							    <!-- to repete table copy upto here-->
+
+																								 <div>
+																							      <div class="wrapper wrapper-content animated fadeInRight">
+																									  {% for items in resultitem %}
+																							        <div class="row">
+
+																							            <div class="col-lg-12">
+																							            <div class="ibox float-e-margins">
+
+																							                <div class="ibox-title">
+																							                    <h4>{{items.type}} at {{items.diary}}:{{items.difference|floatformat:4}}
+																													</h4>
+
+
+																							                    <div class="ibox-tools">
+																							                        <a class="collapse-link">
+																							                            <i class="fa fa-chevron-up"></i>
+																							                        </a>
+
+																							                        <a class="close-link">
+																							                            <i class="fa fa-times"></i>
+																							                        </a>
+																							                    </div>
+																											</div>
+ 																												<div class="ibox-content">
+																												{% for transfer in interstock %}
+
+
+																													{% if transfer.diary == items.diary%}
+
+  																														<li><h5>Transfer {{transfer.type}} {{transfer.to_or_from_diary}} : {{transfer.value|floatformat:4}}</h5></li>
+
+																													{% endif %}
+
+
+																												{%endfor%}
+
+																							                </div>
+																											{%endfor%}
+
+
+																											  <div class="row">
+																											<div class="col-lg-12">
+																							            <div class="ibox float-e-margins">
+																							                <div class="ibox-title">
+																							                    <h5>After Inter Stock Milk Transfer, {{after_transfer}} : {{after_transfer_value|floatformat:4}} </h5>
+
+
+																							                    <div class="ibox-tools">
+																							                        <a class="collapse-link">
+																							                            <i class="fa fa-chevron-up"></i>
+																							                        </a>
+
+																							                        <a class="close-link">
+																							                            <i class="fa fa-times"></i>
+																							                        </a>
+																							                    </div>
+
+																							                </div>
+																							                <div class="ibox-content">
+
+																												{{wm_after_stock_transfer}}
+
+
+																							                </div>
+																							            </div>
+																							        </div>
+																											  </div>
+
+
+
+
+																							                </div>
+																							            </div>
+																							        </div>
+																							        </div>
+																							      </div>
+
+
+
+
+
+
+																							</div>
+
+{% endblock %}
