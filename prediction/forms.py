@@ -216,7 +216,11 @@ class GeneralCalculationForm(forms.ModelForm):
         model=GeneralCalculation
         fields=('calculation_Name','value',)
 
-class ConfigurationAttributesForm(forms.ModelForm):
+class FinancialYearForm(forms.ModelForm):
     class Meta:
         model=ConfigurationAttribute
         fields=('financial_Year',)
+class WMProcurementRateForm(forms.ModelForm):
+    class Meta:
+        model=ConfigurationAttribute
+        fields=('wm_procurement_rate',)

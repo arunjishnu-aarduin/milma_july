@@ -1823,7 +1823,7 @@ def interStockMilkTransferUnion(request):
 
 @login_required
 @user_passes_test(group_check_diary)
-def interStockMilkTransfer(request):
+def balancing(request):
 	if request.method == "POST":
 		form = MonthOnlyForm(request.POST)
 		if form.is_valid():
@@ -1832,6 +1832,7 @@ def interStockMilkTransfer(request):
 
 
 			issue_cream=Issue.objects.get(name='CREAM')
+			issue_smp = Issue.objects.get(name='SMP')
 
 			month = form.cleaned_data["month"]
 
@@ -1840,6 +1841,11 @@ def interStockMilkTransfer(request):
 
 			resultitem = []
 
+			cream_requirement_list=[]
+
+			smp_requirement_list = []
+
+			wmp_requirement_list=[]
 			shortage_list=OrderedDict()
 			surplus_list=OrderedDict()
 
@@ -1856,8 +1862,12 @@ def interStockMilkTransfer(request):
 
 				ret_month, month_issue_requirement_sales_cream = totalIssueRequirement(month, diary, issue_cream)
 
+				ret_month, month_issue_requirement_sales_smp = totalIssueRequirement(month, diary, issue_smp)
 
-				month_requirement_for_milk_issue_production = 0
+
+				month_requirement_for_milk_issue_production_wm = 0
+				month_requirement_for_milk_issue_production_cream = 0
+				month_requirement_for_milk_issue_production_smp = 0
 				type2_issue_list = Issue.objects.filter(type='2')
 
 				for issue_item in type2_issue_list:
@@ -1872,26 +1882,46 @@ def interStockMilkTransfer(request):
 					except Exception as e:
 						month_issue_requirement = 0
 
-					composition_ratio_derived = 0
-					if  issue_wm.name == "WM":
-						try:
-							if issue_item.fat > fwm:
-								composition_ratio_derived = qwmValue(issue_item) / (
+					composition_ratio_derived_wm = 0
+
+					try:
+						if issue_item.fat > fwm:
+							composition_ratio_derived_wm = qwmValue(issue_item) / (
 									qcValue(issue_item) + qwmValue(issue_item) + qsmpValue(issue_item))
-							else:
-								composition_ratio_derived = qwmValue(issue_item) / (
+
+							composition_ratio_derived_cream = qcValue(issue_item) / (
+								qcValue(issue_item) + qwmValue(issue_item) + qsmpValue(issue_item))
+
+							composition_ratio_derived_smp = qsmpValue(issue_item) / (
+							qcValue(issue_item) + qwmValue(issue_item) + qsmpValue(issue_item))
+
+						else:
+							composition_ratio_derived_wm = qwmValue(issue_item) / (
 									(qwmValue(issue_item) - qcValue(issue_item)) + qsmpValue(issue_item))
-						except Exception as e:
-							print "Exception handled in line no 1484"
 
-					requirement_to_produce_milk_issue = month_issue_requirement * composition_ratio_derived
-					month_requirement_for_milk_issue_production += requirement_to_produce_milk_issue
+							composition_ratio_derived_cream = -1 * (qcValue(issue_item) / (
+									(qwmValue(issue_item) - qcValue(issue_item)) + qsmpValue(issue_item)))
+							composition_ratio_derived_smp = qsmpValue(issue_item) / (
+								(qwmValue(issue_item) - qcValue(issue_item)) + qsmpValue(issue_item))
+
+					except Exception as e:
+						print "Exception handled in line no 1484"
+
+					requirement_to_produce_milk_issue_wm = month_issue_requirement * composition_ratio_derived_wm
+					month_requirement_for_milk_issue_production_wm += requirement_to_produce_milk_issue_wm
+
+					requirement_to_produce_milk_issue_cream = month_issue_requirement * composition_ratio_derived_cream
+					month_requirement_for_milk_issue_production_cream += requirement_to_produce_milk_issue_cream
+
+					requirement_to_produce_milk_issue_smp = month_issue_requirement * composition_ratio_derived_smp
+					month_requirement_for_milk_issue_production_smp += requirement_to_produce_milk_issue_smp
 
 
+				total_month_requirement_wm = month_requirement_for_milk_issue_production_wm + month_issue_requirement_sales_wm
 
-				total_month_requirement_wm = month_requirement_for_milk_issue_production + month_issue_requirement_sales_wm
+				total_month_requirement_cream=month_requirement_for_milk_issue_production_cream + month_issue_requirement_sales_cream
 
-				total_month_requirement_cream=month_requirement_for_milk_issue_production + month_issue_requirement_sales_cream
+				total_month_requirement_smp = month_requirement_for_milk_issue_production_cream + month_issue_requirement_sales_smp
 
 				# total_month_requirement = month_requirement_for_milk_issue_production
 				total_month_procurement=0
@@ -1924,105 +1954,466 @@ def interStockMilkTransfer(request):
 
 
 
+				cream_requirement_item={"month":MONTHS[month],"diary":diary,"total_cream_used":0-total_month_requirement_cream,"type":"Surplus"}
+				cream_requirement_list.append(cream_requirement_item)
+				smp_requirement_item = {"month": MONTHS[month], "diary": diary,
+									  "total_smp_used": 0 - total_month_requirement_smp, "type": "Sale"}
+				smp_requirement_list.append(smp_requirement_item)
+
+				wmp_requirement_item = {"month": MONTHS[month], "diary": diary,
+									"total_wmp_used": 0 , "type": "Sale"}
+				wmp_requirement_list.append(wmp_requirement_item)
+
+
 
 			# print str(shortage_list)
-			# print str(surplus_list)
+			print str(cream_requirement_list)
 			diary = diary_of_user(request.user)
-			after_transfer_value,inter_stock_transfer=interMilkTransfer(shortage_list,surplus_list,total_requirement_diary_cpd,diary_list,diary)
+			after_transfer_diary,inter_stock_transfer=interMilkTransfer(shortage_list,surplus_list,total_requirement_diary_cpd,diary_list)
+			after_wm_balancing_diarylist=wmBalancing(after_transfer_diary,month)
 
-			if after_transfer_value<0:
-				after_transfer ="Shortage"
-				after_transfer_value*=(-1)
-				procurement_of_month=0
-				try:
-					Awm_obj = ActualWMProcurement.objects.get(diary=diary, month=month)
-					procurement_of_month = Awm_obj.targetProcurement
-				except Exception as e:
-					print "Exception handled in line 1791"
+			wm_after_transfer=[]
 
-				max_allowable_reconstitution = procurement_of_month*GeneralCalculation.objects.get(code=1).value/100
+			shortage_list_cream = OrderedDict()
+			surplus_list_cream = OrderedDict()
 
-				reconstitution_amount=0
-
-
-				if max_allowable_reconstitution<after_transfer_value:
-					wm_purchase=after_transfer_value-max_allowable_reconstitution
-					purchase_rate=GeneralCalculation.objects.get(code=8).value
-					wm_after_stock_transfer="WM Purchased:"+str('{0:.4f}'.format(wm_purchase))+", Amount:"+str('{0:.4f}'.format(wm_purchase*purchase_rate))
-
-					reconstitution_amount=max_allowable_reconstitution
-				else:
-					reconstitution_amount = max_allowable_reconstitution - after_transfer_value
-
-				if reconstitution_amount!=0:
-
-					reconstitution_from_smp=reconstitution_amount*GeneralCalculation.objects.get(code=2).value/100
-
-					reconstitution_from_wmp=reconstitution_amount*GeneralCalculation.objects.get(code=3).value/100
-
-					quantity_of_water=100-qcReconstitutionValueSmp()-qsmpReconstitutionValueSmp()
-
-					cream_ratio=qcReconstitutionValueSmp()/100
-					smp_ratio=qsmpReconstitutionValueSmp()/100
-					water_ratio=reconstitution_from_smp*quantity_of_water/100
-
-					smp_total=reconstitution_from_smp*smp_ratio
-					cream_total=reconstitution_amount*cream_ratio
-					water_total=reconstitution_amount*water_ratio
-
-
-			else:
-				after_transfer = "Surplus"
-
-				sale_percentage=GeneralCalculation.objects.get(code=4).value
-				sale_rate=GeneralCalculation.objects.get(code=9).value
-
-				wm_for_sale=after_transfer_value*sale_percentage/100
+			cream_list=[]
+			for item_cream in cream_requirement_list:
 
 
 
-				wm_after_stock_transfer="WM Sold:"+str('{0:.4f}'.format(wm_for_sale))+", Amount:"+str('{0:.4f}'.format(wm_for_sale*sale_rate))
-
-
-				csm_convert_percentage=GeneralCalculation.objects.get(code=5).value
-				wm_converted_to_csm=after_transfer_value*csm_convert_percentage/100
-
-				csm_wm_ratio=qwmReconstitutionValueCSM()/(qwmReconstitutionValueCSM()-qcReconstitutionValueCSM())
-				csm_cream_ratio=-1*(qcReconstitutionValueCSM()/(qwmReconstitutionValueCSM()-qcReconstitutionValueCSM()))
-
-
-				csm_wm_amount=wm_converted_to_csm*csm_wm_ratio
-				csm_cream_amount=wm_converted_to_csm*csm_cream_ratio
-
-
-				scsm=scsmCalculation()
-
-				wm_after_stock_transfer+=" SNF Percentage of CSM:"+str('{0:.4f}'.format(scsm))
-
-
-				csm_sale_percentage= GeneralCalculation.objects.get(code=6).value
-				csm_sale_rate=GeneralCalculation.objects.get(code=10).value
-				csm_sold=wm_converted_to_csm*csm_sale_percentage/100
-				csm_sold_amount=csm_sold*csm_sale_rate
-
-				wm_after_stock_transfer+=" CSM Sold:"+str('{0:.4f}'.format(csm_sold))+", Amount:"+str('{0:.4f}'.format(csm_sold_amount))
-
-
-				csm_smp_conversion_percentage=GeneralCalculation.objects.get(code=7).value
-				csm_converted_to_smp=wm_converted_to_csm*csm_smp_conversion_percentage/100
-
-				wm_after_stock_transfer+=" CSM Converted to SMP:"+str('{0:.4f}'.format(csm_converted_to_smp))
+				for item in after_wm_balancing_diarylist:
+					if item['diary']==diary.name:
+						wm_after_transfer.append(item)
 
 
 
-			return render(request, 'prediction/InterStockMilkTransfer.html',
-						  {'form': form, 'resultitem': resultitem, 'interstock': inter_stock_transfer,
-						   'after_transfer_value': after_transfer_value, 'after_transfer': after_transfer,
-						   'wm_after_stock_transfer': wm_after_stock_transfer})
+
+
+					if item_cream['diary'].name==item['diary']:
+
+
+						requirement=item_cream['total_cream_used']*(-1)
+						item_cream['total_cream_used']=0-(requirement+item['cream_used_csm']+item['cream_used_smp'])
+
+
+
+					if item_cream['total_cream_used'] < 0:
+						item_cream['type'] = "Shortage"
+
+						cream_used=item_cream['total_cream_used'] * (-1)
+						shortage_list_cream[item_cream['diary']]=cream_used*(-1)
+
+
+					elif item_cream['total_cream_used']>0:
+						item_cream['type'] = "Surplus"
+						surplus_list_cream[item_cream['diary']] = item_cream['total_cream_used']
+				if item_cream['total_cream_used']!=0:
+					if item_cream['total_cream_used']<0:
+						item_cream['total_cream_used']=item_cream['total_cream_used']*(-1)
+					cream_list.append(item_cream)
+			smp_after_transfer=[]
+			for item_smp in smp_requirement_list:
+
+				for item in after_wm_balancing_diarylist:
+					if item_smp['diary'].name == item['diary']:
+						requirement = item_smp['total_smp_used'] * (-1)
+						item_smp['total_smp_used'] = 0 - (requirement + item['smp_used_smp'] + item['smp_used_wmp']-item['converted_smp'])
+
+					if item_smp['total_smp_used'] < 0:
+						item_smp['type'] = "Purchase"
+
+						used = item_smp['total_smp_used'] * (-1)
+
+						item_smp['total_smp_used'] = used
+
+					elif item_smp['total_smp_used'] > 0:
+						item_smp['type'] = "Sale"
+				if item_smp['diary'].name == diary.name:
+
+					if item_smp['type']=="Sale":
+						try:
+							sale_rate=GeneralCalculation.objects.get(code='14').value
+							smp_item={'transaction':'SMP Sold:'+str('{0:.4f}'.format(item_smp['total_smp_used']))+" ,Amount:"+str('{0:.4f}'.format(item_smp['total_smp_used']*sale_rate))}
+
+						except Exception as e:
+							print "Exception handled At 2034"
+					else:
+						try:
+							rate = GeneralCalculation.objects.get(code='13').value
+							smp_item = {'transaction': 'SMP Purchased:' + str(
+								'{0:.4f}'.format(item_smp['total_smp_used'])) + " ,Amount:" + str(
+								'{0:.4f}'.format(item_smp['total_smp_used'] * rate))}
+
+						except Exception as e:
+							print "Exception handled At 2045"
+
+					smp_after_transfer.append(smp_item)
+			wmp_after_transfer=[]
+			for item_wmp in wmp_requirement_list:
+
+				for item in after_wm_balancing_diarylist:
+					if item_wmp['diary'].name == item['diary']:
+
+						item_wmp['total_wmp_used'] = 0 - item['wmp_used']
+						if item_wmp['total_wmp_used'] < 0:
+							item_wmp['type'] = "Purchase"
+
+							used = item_wmp['total_wmp_used'] * (-1)
+
+							item_wmp['total_wmp_used'] = used
+
+						elif item_wmp['total_wmp_used'] > 0:
+							item_wmp['type'] = "Sale"
+				if item_wmp['diary'].name == diary.name:
+
+					if item_wmp['type'] == "Sale":
+						try:
+							sale_rate = GeneralCalculation.objects.get(code='12').value
+							wmp_item = {'transaction': 'WMP Sold:' + str(
+									'{0:.4f}'.format(item_wmp['total_wmp_used'])) + " ,Amount:" + str(
+									'{0:.4f}'.format(item_wmp['total_wmp_used'] * sale_rate))}
+
+						except Exception as e:
+							print "Exception handled At 2078"
+					else:
+						try:
+							rate = GeneralCalculation.objects.get(code='11').value
+							wmp_item = {'transaction': 'WMP Purchased:' + str(
+								'{0:.4f}'.format(item_wmp['total_wmp_used'])) + " ,Amount:" + str(
+									'{0:.4f}'.format(item_wmp['total_wmp_used'] * rate))}
+
+						except Exception as e:
+							print "Exception handled At 2087"
+
+					wmp_after_transfer.append(wmp_item)
+
+			after_cream_transfer_diary, inter_stock_transfer_cream = interCreamTransfer(shortage_list_cream, surplus_list_cream,
+																		    diary_list)
+
+
+			after_cream_balancing_diarylist = creamBalancing(after_cream_transfer_diary)
+
+			cream_after_transfer=[]
+
+
+
+			for item in after_cream_balancing_diarylist:
+				if item['diary'].name == diary.name:
+					cream_after_transfer.append(item)
+
+			if not bool(wm_after_transfer):
+				transaction_item = {'after_transfer': 'Balanced'}
+				wm_after_transfer.append(transaction_item)
+
+			return render(request, 'prediction/Balancing.html',
+						  {'form': form, 'resultitem': resultitem, 'interstock': inter_stock_transfer,'after_transfer': wm_after_transfer
+
+						   ,'cream_list':cream_list,'inter_stock_cream':inter_stock_transfer_cream,'cream_after_transfer': cream_after_transfer
+						   ,'smp_list':smp_requirement_list,'smp_after_transfer':smp_after_transfer,'wmp_list':wmp_requirement_list,'wmp_after_transfer':wmp_after_transfer})
+
+						   # 'after_transfer_value': after_transfer_value, 'after_transfer': after_transfer,
+						   # 'wm_after_stock_transfer': wm_after_stock_transfer
 	else:
 		form = MonthOnlyForm()
-		return render(request, 'prediction/InterStockMilkTransfer.html', {'form': form})
+		return render(request, 'prediction/Balancing.html', {'form': form})
 
+
+@login_required
+@user_passes_test(group_check_union)
+def balancingUnion(request):
+	if request.method == "POST":
+		form = MonthOnlyForm(request.POST)
+		if form.is_valid():
+
+			issue_wm = Issue.objects.get(name='WM')
+
+
+			issue_cream=Issue.objects.get(name='CREAM')
+			issue_smp = Issue.objects.get(name='SMP')
+
+			month = form.cleaned_data["month"]
+
+
+
+
+			resultitem = []
+
+			cream_requirement_list=[]
+
+			smp_requirement_list = []
+
+			wmp_requirement_list=[]
+			shortage_list=OrderedDict()
+			surplus_list=OrderedDict()
+
+
+			fwm = issue_wm.fat
+
+			diary_list = Diary.objects.all()
+			total_requirement_diary_cpd = 0
+			for diary in diary_list:
+
+
+
+				ret_month,month_issue_requirement_sales_wm = totalIssueRequirement(month, diary, issue_wm)
+
+				ret_month, month_issue_requirement_sales_cream = totalIssueRequirement(month, diary, issue_cream)
+
+				ret_month, month_issue_requirement_sales_smp = totalIssueRequirement(month, diary, issue_smp)
+
+
+				month_requirement_for_milk_issue_production_wm = 0
+				month_requirement_for_milk_issue_production_cream = 0
+				month_requirement_for_milk_issue_production_smp = 0
+				type2_issue_list = Issue.objects.filter(type='2')
+
+				for issue_item in type2_issue_list:
+
+					# issue_ret_month, month_issue_requirement = totalIssueRequirement(month, diary, issue_item)
+
+					try:
+
+						issue_ret_month,month_issue_requirement =totalIssueRequirement(month, diary, issue_item)
+
+
+					except Exception as e:
+						month_issue_requirement = 0
+
+					composition_ratio_derived_wm = 0
+
+					try:
+						if issue_item.fat > fwm:
+							composition_ratio_derived_wm = qwmValue(issue_item) / (
+									qcValue(issue_item) + qwmValue(issue_item) + qsmpValue(issue_item))
+
+							composition_ratio_derived_cream = qcValue(issue_item) / (
+								qcValue(issue_item) + qwmValue(issue_item) + qsmpValue(issue_item))
+
+							composition_ratio_derived_smp = qsmpValue(issue_item) / (
+							qcValue(issue_item) + qwmValue(issue_item) + qsmpValue(issue_item))
+
+						else:
+							composition_ratio_derived_wm = qwmValue(issue_item) / (
+									(qwmValue(issue_item) - qcValue(issue_item)) + qsmpValue(issue_item))
+
+							composition_ratio_derived_cream = -1 * (qcValue(issue_item) / (
+									(qwmValue(issue_item) - qcValue(issue_item)) + qsmpValue(issue_item)))
+							composition_ratio_derived_smp = qsmpValue(issue_item) / (
+								(qwmValue(issue_item) - qcValue(issue_item)) + qsmpValue(issue_item))
+
+					except Exception as e:
+						print "Exception handled in line no 1484"
+
+					requirement_to_produce_milk_issue_wm = month_issue_requirement * composition_ratio_derived_wm
+					month_requirement_for_milk_issue_production_wm += requirement_to_produce_milk_issue_wm
+
+					requirement_to_produce_milk_issue_cream = month_issue_requirement * composition_ratio_derived_cream
+					month_requirement_for_milk_issue_production_cream += requirement_to_produce_milk_issue_cream
+
+					requirement_to_produce_milk_issue_smp = month_issue_requirement * composition_ratio_derived_smp
+					month_requirement_for_milk_issue_production_smp += requirement_to_produce_milk_issue_smp
+
+
+				total_month_requirement_wm = month_requirement_for_milk_issue_production_wm + month_issue_requirement_sales_wm
+
+				total_month_requirement_cream=month_requirement_for_milk_issue_production_cream + month_issue_requirement_sales_cream
+
+				total_month_requirement_smp = month_requirement_for_milk_issue_production_cream + month_issue_requirement_sales_smp
+
+				# total_month_requirement = month_requirement_for_milk_issue_production
+				total_month_procurement=0
+				try:
+					Awm_obj=ActualWMProcurement.objects.get(diary=diary, month=month)
+					total_month_procurement = Awm_obj.targetProcurement
+				except Exception as e:
+					print "Exception handled in line 1749"
+
+				difference=total_month_procurement-total_month_requirement_wm
+
+
+
+				if difference !=0:
+					type_of_difference=""
+					if difference>=0:
+						type_of_difference="Surplus"
+						surplus_list[diary.name]=difference
+					else:
+						type_of_difference="Shortage"
+						difference=difference*-1
+						shortage_list[diary.name]=difference
+
+					result = {"month":MONTHS[month],"diary":diary.name,"requirement":total_month_requirement_wm,"procurement":total_month_procurement,"difference":difference,"type":type_of_difference}
+					resultitem.append(result)
+
+				if "CPD"==diary.id:
+					total_requirement_diary_cpd=total_month_requirement_wm
+
+
+
+
+				cream_requirement_item={"month":MONTHS[month],"diary":diary,"total_cream_used":0-total_month_requirement_cream,"type":"Surplus"}
+				cream_requirement_list.append(cream_requirement_item)
+				smp_requirement_item = {"month": MONTHS[month], "diary": diary,
+									  "total_smp_used": 0 - total_month_requirement_smp, "type": "Sale"}
+				smp_requirement_list.append(smp_requirement_item)
+
+				wmp_requirement_item = {"month": MONTHS[month], "diary": diary,
+									"total_wmp_used": 0 , "type": "Sale"}
+				wmp_requirement_list.append(wmp_requirement_item)
+
+
+
+			# print str(shortage_list)
+
+
+			after_transfer_diary,inter_stock_transfer=interMilkTransfer(shortage_list,surplus_list,total_requirement_diary_cpd,diary_list)
+			after_wm_balancing_diarylist=wmBalancing(after_transfer_diary,month)
+
+
+
+			shortage_list_cream = OrderedDict()
+			surplus_list_cream = OrderedDict()
+
+			cream_list=[]
+			for item_cream in cream_requirement_list:
+
+
+
+				for item in after_wm_balancing_diarylist:
+
+
+
+
+
+
+					if item_cream['diary'].name==item['diary']:
+
+
+						requirement=item_cream['total_cream_used']*(-1)
+						item_cream['total_cream_used']=0-(requirement+item['cream_used_csm']+item['cream_used_smp'])
+
+
+
+					if item_cream['total_cream_used'] < 0:
+						item_cream['type'] = "Shortage"
+
+						cream_used=item_cream['total_cream_used'] * (-1)
+						shortage_list_cream[item_cream['diary']]=cream_used*(-1)
+
+
+					elif item_cream['total_cream_used']>0:
+						item_cream['type'] = "Surplus"
+						surplus_list_cream[item_cream['diary']] = item_cream['total_cream_used']
+				if item_cream['total_cream_used']!=0:
+					if item_cream['total_cream_used']<0:
+						item_cream['total_cream_used']=item_cream['total_cream_used']*(-1)
+					cream_list.append(item_cream)
+			smp_after_transfer=[]
+			for item_smp in smp_requirement_list:
+
+				for item in after_wm_balancing_diarylist:
+					if item_smp['diary'].name == item['diary']:
+						requirement = item_smp['total_smp_used'] * (-1)
+						item_smp['total_smp_used'] = 0 - (requirement + item['smp_used_smp'] + item['smp_used_wmp']-item['converted_smp'])
+
+
+					if item_smp['total_smp_used'] < 0:
+						item_smp['type'] = "Purchase"
+
+						used = item_smp['total_smp_used'] * (-1)
+
+						item_smp['total_smp_used'] = used
+
+					elif item_smp['total_smp_used'] > 0:
+						item_smp['type'] = "Sale"
+
+
+				if item_smp['type']=="Sale":
+					try:
+						sale_rate=GeneralCalculation.objects.get(code='14').value
+						smp_item={'transaction':'SMP Sold:'+str('{0:.4f}'.format(item_smp['total_smp_used']))+" ,Amount:"+str('{0:.4f}'.format(item_smp['total_smp_used']*sale_rate)),'diary':item_smp['diary'].name}
+
+					except Exception as e:
+						print "Exception handled At 2034"
+				else:
+					try:
+						rate = GeneralCalculation.objects.get(code='13').value
+						smp_item = {'transaction': 'SMP Purchased:' + str(
+								'{0:.4f}'.format(item_smp['total_smp_used'])) + " ,Amount:" + str(
+								'{0:.4f}'.format(item_smp['total_smp_used'] * rate)),'diary':item_smp['diary'].name}
+
+
+					except Exception as e:
+						print "Exception handled At 2045"
+				if item_smp['total_smp_used'] != 0:
+					smp_after_transfer.append(smp_item)
+			wmp_after_transfer=[]
+			for item_wmp in wmp_requirement_list:
+
+				for item in after_wm_balancing_diarylist:
+					if item_wmp['diary'].name == item['diary']:
+
+						item_wmp['total_wmp_used'] = 0 - item['wmp_used']
+						if item_wmp['total_wmp_used'] < 0:
+							item_wmp['type'] = "Purchase"
+
+							used = item_wmp['total_wmp_used'] * (-1)
+
+							item_wmp['total_wmp_used'] = used
+
+						elif item_wmp['total_wmp_used'] > 0:
+							item_wmp['type'] = "Sale"
+
+
+				if item_wmp['type'] == "Sale":
+					try:
+						sale_rate = GeneralCalculation.objects.get(code='12').value
+						wmp_item = {'transaction': 'WMP Sold:' + str(
+									'{0:.4f}'.format(item_wmp['total_wmp_used'])) + " ,Amount:" + str(
+									'{0:.4f}'.format(item_wmp['total_wmp_used'] * sale_rate)),'diary':item_wmp['diary'].name}
+
+					except Exception as e:
+						print "Exception handled At 2078"
+				else:
+					try:
+						rate = GeneralCalculation.objects.get(code='11').value
+						wmp_item = {'transaction': 'WMP Purchased:' + str(
+								'{0:.4f}'.format(item_wmp['total_wmp_used'])) + " ,Amount:" + str(
+									'{0:.4f}'.format(item_wmp['total_wmp_used'] * rate)),'diary':item_wmp['diary'].name}
+
+					except Exception as e:
+						print "Exception handled At 2087"
+				if item_wmp['total_wmp_used']!=0:
+					wmp_after_transfer.append(wmp_item)
+
+			after_cream_transfer_diary, inter_stock_transfer_cream = interCreamTransfer(shortage_list_cream, surplus_list_cream,
+																		    diary_list)
+
+
+			after_cream_balancing_diarylist = creamBalancing(after_cream_transfer_diary)
+
+
+
+
+
+
+
+
+
+
+
+			return render(request, 'prediction/BalancingUnion.html',
+						  {'form': form, 'resultitem': resultitem, 'interstock': inter_stock_transfer,'after_transfer': after_wm_balancing_diarylist
+
+						   ,'cream_list':cream_list,'inter_stock_cream':inter_stock_transfer_cream,'cream_after_transfer': after_cream_balancing_diarylist
+						   ,'smp_list':smp_requirement_list,'smp_after_transfer':smp_after_transfer,'wmp_list':wmp_requirement_list,'wmp_after_transfer':wmp_after_transfer})
+
+						   # 'after_transfer_value': after_transfer_value, 'after_transfer': after_transfer,
+						   # 'wm_after_stock_transfer': wm_after_stock_transfer
+	else:
+		form = MonthOnlyForm()
+		return render(request, 'prediction/BalancingUnion.html', {'form': form})
 @login_required
 @user_passes_test(group_check_union)
 def generalCalculation(request):
@@ -2064,7 +2455,7 @@ def generalCalculation(request):
 def financialYear(request):
 	current_finyear = ConfigurationAttribute.objects.first()
 	if request.method == "POST":
-		form = ConfigurationAttributesForm(request.POST)
+		form = FinancialYearForm(request.POST)
 		if form.is_valid():
 			data = form.cleaned_data
 			if current_finyear:
@@ -2077,7 +2468,7 @@ def financialYear(request):
 
 			return redirect(financialYear)
 	else:
-		form = ConfigurationAttributesForm()
+		form = FinancialYearForm()
 		next_year ="-----"
 		if current_finyear:
 
@@ -2086,6 +2477,31 @@ def financialYear(request):
 			next_year=current_finyear.financial_Year+1
 
 	return render(request, 'prediction/FinancialYear.html', {'form': form,'next_year':next_year,'next_year_plus':next_year+1})
+@login_required
+@user_passes_test(group_check_union)
+def wmProcurementRate(request):
+	rate_obj = ConfigurationAttribute.objects.first()
+	if request.method == "POST":
+		form = WMProcurementRateForm(request.POST)
+		if form.is_valid():
+			data = form.cleaned_data
+			if rate_obj:
+
+				rate_obj.wm_procurement_rate=data['wm_procurement_rate']
+				rate_obj.save()
+			else:
+				form_obj = form.save(commit=False)
+				form_obj.save()
+
+			return redirect(wmProcurementRate)
+	else:
+		form = WMProcurementRateForm()
+
+		if rate_obj:
+			form.fields['wm_procurement_rate'].initial = rate_obj.wm_procurement_rate
+
+
+	return render(request, 'prediction/WMProcurement.html', {'form': form})
 
 
 

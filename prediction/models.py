@@ -394,6 +394,17 @@ class InterStockMilkTransferOrder(models.Model):
 		unique_together = ('from_diary', 'to_diary',)
 	def __str__(self):
 		return str(self.from_diary.name)+"->"+str(self.to_diary.name)+"-"+str(self.priority)
+
+class InterStockCreamTransferOrder(models.Model):
+	from_diary=models.ForeignKey('Diary',on_delete=models.CASCADE,related_name="from_dairy",verbose_name = 'from dairy')
+	to_diary=models.ForeignKey('Diary',on_delete=models.CASCADE,verbose_name = 'dairy')
+	priority=models.PositiveSmallIntegerField()
+	class Meta:
+		unique_together = ('from_diary', 'to_diary',)
+	def __str__(self):
+		return str(self.from_diary.name)+"->"+str(self.to_diary.name)+"-"+str(self.priority)
+
+
 class GeneralCalculation(models.Model):
 	code=models.PositiveSmallIntegerField(primary_key=True)
 	name=models.CharField(max_length=100)
@@ -404,9 +415,10 @@ class ConfigurationAttribute(models.Model):
 
 	financial_Year=models.IntegerField( choices=year_dropdown,verbose_name="")
 	issue_requirement_change_status=models.BooleanField()
+	wm_procurement_rate=models.DecimalField(max_digits=15,decimal_places=2,validators=[validate_positive],verbose_name="rate")
 
 	def __str__(self):
-		return  str(self.financial_Year)+" Composition Status-"+str(self.issue_requirement_change_status)
+		return  str(self.financial_Year)+" Composition Status-"+str(self.issue_requirement_change_status)+" WM Procurement Rate-"+str(self.wm_procurement_rate)
 class IssueUsedAsCategoryIndirect(models.Model):
 	issue = models.ForeignKey('Issue', on_delete=models.CASCADE)
 	category = models.ForeignKey('Category', on_delete=models.CASCADE)

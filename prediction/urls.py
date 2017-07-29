@@ -12,9 +12,12 @@ urlpatterns=[
     url(r'^basicRequirement/',views.basicRequirement,name='basicRequirement'),
     url(r'^basicRequirementUnion/',views.basicRequirementUnion,name='basicRequirementUnion'),
     url(r'^interStockMilkTransferUnion/',views.interStockMilkTransferUnion,name='interStockMilkTransferUnion'),
-    url(r'^interStockMilkTransfer/',views.interStockMilkTransfer,name='interStockMilkTransfer'),
+    url(r'^balancing/',views.balancing,name='balancing'),
+    url(r'^balancingUnion/',views.balancingUnion,name='balancingUnion'),
     url(r'^generalCalculation/',views.generalCalculation,name='generalCalculation'),
     url(r'^financialYear/',views.financialYear,name='financialYear'),
+    url(r'^wmProcurementRate/',views.wmProcurementRate,name='wmProcurementRate'),
+
 
 
 
