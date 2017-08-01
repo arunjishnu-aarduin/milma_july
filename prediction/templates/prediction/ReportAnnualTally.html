@@ -1,0 +1,239 @@
+{% extends 'master_union.html' %}
+
+{% block content %}
+
+																									<!-- page content -->
+																									<div>
+																									        <div class="row wrapper border-bottom white-bg page-heading">
+																									            <div class="col-lg-10">
+																									                <h2>Report</h2>
+																									            </div>
+																									            <div class="col-lg-2">
+
+																									            </div>
+																									        </div>
+																									<!-- For table copy from here-->
+																									    <div>
+																									      <div class="wrapper wrapper-content animated fadeInRight">
+																									        <div class="row">
+																									            <div class="col-lg-12">
+																									            <div class="ibox float-e-margins">
+																									                <div class="ibox-title">
+																									                    <h5>Annual Tally</h5>
+																									                    <div class="ibox-tools">
+																									                        <a class="collapse-link">
+																									                            <i class="fa fa-chevron-up"></i>
+																									                        </a>
+
+																									                        <a class="close-link">
+																									                            <i class="fa fa-times"></i>
+																									                        </a>
+																									                    </div>
+																																			{% if messages %}
+																											<ul class="messages">
+																											{% for message in messages %}
+																											<li>{% if message.tags %} class="{{ message.tags }}"{% endif %}>{{ message }}</li>
+																											{% endfor %}
+																											</ul>
+																											{% endif %}
+																									                </div>
+																									                <div class="ibox-content">
+
+
+	                <div class="table-responsive">
+				        <table class="table table-striped table-bordered table-hover dataTables-example" >
+							<thead>
+								<td>Quantity</td>
+								{% for number,name in month.items %}
+								<td>{{name}}</td>
+								{%endfor%}
+							</thead>
+							<tbody>
+								<tr>
+									<td>TOTAL MILK HANDLED</td>
+									{% for item,value in total_milk_handled.items %}
+									<td>{{value|floatformat:4}}</td>
+									{%endfor%}
+								</tr>
+
+								<tr>
+									<td>WHOLE MILK REQUIREMENT FOR PRODUCTS</td>
+									{% for item,value in wm_requirement_product.items %}
+									<td>{{value|floatformat:4}}</td>
+									{%endfor%}
+
+								</tr>
+								<tr>
+									<td>TOTAL SKIM MILK REQUIRED</td>
+									{% for item,value in total_sm_required.items %}
+									<td>{{value|floatformat:4}}</td>
+									{%endfor%}
+
+								</tr>
+								<tr>
+									<td>TOTAL MILK REQUIRED FOR PRODUCTS</td>
+									{% for item,value in total_milk_required_products.items %}
+									<td>{{value|floatformat:4}}</td>
+									{%endfor%}
+
+								</tr>
+								<tr>
+									<td>% OF MILK DIVERTED FOR PRODUCTS AGAINST TOTAL MILK HANDLED</td>
+									{% for item,value in milk_diverted_percentage.items %}
+									<td>{{value|floatformat:4}}</td>
+									{%endfor%}
+
+								</tr>
+								<tr>
+									<td>MILK DISTRESS SALES</td>
+									{% for item,value in wm_surplus_sale.items %}
+									<td>{{value|floatformat:4}}</td>
+									{%endfor%}
+
+								</tr>
+								<tr>
+									<td>% OF DISTRESS MILK SALES AGAINST TOTAL MILK HANDLED</td>
+									{% for item,value in distress_milk_percentage.items %}
+									<td>{{value|floatformat:4}}</td>
+									{%endfor%}
+
+								</tr>
+								<tr>
+									<td>SKIMMED MILK FROM SURPLUS MILK FOR  SALES</td>
+									{% for item,value in csm_surplus_sale.items %}
+									<td>{{value|floatformat:4}}</td>
+									{%endfor%}
+
+								</tr>
+								<tr>
+									<td>SKIMMED MILK SENT FOR CONVERSION</td>
+									{% for item,value in csm_converted_smp.items %}
+									<td>{{value|floatformat:4}}</td>
+									{%endfor%}
+
+								</tr>
+								<tr>
+									<td>TOTAL CREAM HANDLED</td>
+									{% for item,value in total_cream_handled.items %}
+									<td>{{value|floatformat:4}}</td>
+									{%endfor%}
+
+								</tr>
+								<tr>
+									<td>TOTAL CREAM HANDLED PER DAY IN METRIC TON</td>
+									{% for item,value in total_cream_matric.items %}
+									<td>{{value|floatformat:4}}</td>
+									{%endfor%}
+
+								</tr>
+								<tr>
+									<td>CREAM REQUIREMENT FOR PRODUCTS</td>
+									{% for item,value in total_cream_required.items %}
+									<td>{{value|floatformat:4}}</td>
+									{%endfor%}
+
+								</tr>
+								<tr>
+									<td>CREAM PURCHASE</td>
+									{% for item,value in total_cream_purchased.items %}
+									<td>{{value|floatformat:4}}</td>
+									{%endfor%}
+
+								</tr>
+								<tr>
+									<td>CREAM DISTRESS SALES</td>
+									{% for item,value in total_cream_sold.items %}
+									<td>{{value|floatformat:4}}</td>
+									{%endfor%}
+
+								</tr>
+								<tr>
+									<td>% OF DISTRESS CREAM SALES AGAINST TOTAL CREAM HANDLED</td>
+									{% for item,value in distress_cream_percentage.items %}
+									<td>{{value|floatformat:4}}</td>
+									{%endfor%}
+
+								</tr>
+								<tr>
+									<td>% OF WHOLE MILK PURCHASE AGAINST TOTAL MILK HANDLED</td>
+									{% for item,value in wm_purchase_percentage.items %}
+									<td>{{value|floatformat:4}}</td>
+									{%endfor%}
+
+								</tr>
+								<tr>
+									<td>SMP PURCHASE</td>
+									{% for item,value in total_smp_purchased.items %}
+									<td>{{value|floatformat:4}}</td>
+									{%endfor%}
+
+								</tr>
+								<tr>
+									<td>SMP DISTRESS SALES</td>
+									{% for item,value in total_smp_sold.items %}
+									<td>{{value|floatformat:4}}</td>
+									{%endfor%}
+
+								</tr>
+								<tr>
+									<td>SMP RECIEVED FROM CONVERSION</td>
+									{% for item,value in total_smp_recieved.items %}
+									<td>{{value|floatformat:4}}</td>
+									{%endfor%}
+
+								</tr>
+								<tr>
+									<td>WMP DISTRESS SALES</td>
+									{% for item,value in total_wmp_sold.items %}
+									<td>{{value|floatformat:4}}</td>
+									{%endfor%}
+
+								</tr>
+								<tr>
+									<td>WMP PURCHASE</td>
+									{% for item,value in total_wmp_purchased.items %}
+									<td>{{value|floatformat:4}}</td>
+									{%endfor%}
+
+								</tr>
+							{% for category,value_list in category_sale_list.items %}
+								<tr>
+									<td>{{category}} Sales</td>
+									{% for item in value_list %}
+									<td>{{item.value|floatformat:4}}</td>
+									{%endfor%}
+
+								</tr>
+							{%endfor%}
+
+
+
+
+							</tbody>
+						</table>
+                    </div>
+
+																									                </div>
+
+
+
+
+
+																									                    </div>
+
+																									                </div>
+
+																									            </div>
+																									        </div>
+
+
+																									        </div>
+																									      </div>
+
+
+
+
+
+
+
+{% endblock %}

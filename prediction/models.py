@@ -220,6 +220,7 @@ class ActualSale(models.Model):
 		return self.product.rate*self.targetSalesQuantity
 
 
+
 class ActualStockin(models.Model):
 	diary=models.ForeignKey('Diary',on_delete=models.CASCADE,verbose_name = 'dairy')
 	month=models.PositiveSmallIntegerField(choices=MONTHS.items())
@@ -361,6 +362,23 @@ class ActualWMProcurement(models.Model):
 		except Exception as e:
 			print "Specific Gravity Fetching Failed"
 			return (self.procurement + (self.procurement * self.growthFactor) / 100)
+
+	@property
+	def targetProcurementLitre(self):
+		try:
+			return (self.procurement + (self.procurement * self.growthFactor) / 100)
+		except Exception as e:
+			print "Exception Handled At targetProcurementLitre 370"
+			return 0
+
+	@property
+	def targetAmount(self):
+		try:
+			rate=ConfigurationAttribute.objects.first().wm_procurement_rate
+			return self.targetProcurementLitre*rate
+		except Exception as e:
+			print "Wm Procurement Rate Fetching Failed"
+			return 0
 
 
 

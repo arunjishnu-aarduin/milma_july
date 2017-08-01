@@ -17,6 +17,9 @@ urlpatterns=[
     url(r'^generalCalculation/',views.generalCalculation,name='generalCalculation'),
     url(r'^financialYear/',views.financialYear,name='financialYear'),
     url(r'^wmProcurementRate/',views.wmProcurementRate,name='wmProcurementRate'),
+    url(r'^reportAnnual/',views.reportAnnual,name='reportAnnual'),
+    url(r'^reportMAT/', views.reportMAT, name='reportMAT'),
+
 
 
 

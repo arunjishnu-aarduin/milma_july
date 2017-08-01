@@ -44,6 +44,7 @@
 																																																									 <th>Procurement</th>
 																																																									 <th>Growth Factor</th>
 																																																									 <th>Target Procurement</th>
+																																																									 <th>Amount</th>
 
 																																																								 </tr>
 																																																							 </thead>
@@ -56,7 +57,8 @@
 																																																									<td>{{item.get_month_display}}</td>
 																																																									<td>{{item.procurement}}</td>
 																																																									<td>{{item.growthFactor}}</td>
-																																																									<td>{{item.targetProcurement}}</td>
+																																																									<td>{{item.targetProcurementLitre}}</td>
+																																																									<td>{{item.targetAmount|floatformat:4}}</td>
 																																																									</tr>
 																																																									{%endfor%}
 
@@ -102,6 +104,7 @@
 						 			 <th>Sales</th>
 						 			 <th>Growth Factor</th>
 						 			 <th>Target Sales</th>
+									 <th>Amount</th>
 
 						 		 </tr>
 						 	 </thead>
@@ -116,6 +119,7 @@
 						 				 <td>{{item.sales}}</td>
 						 				 <td>{{item.growthFactor}}</td>
 						 				 <td>{{item.targetSalesQuantity}}</td>
+									 <td>{{item.targetRevenue|floatformat:4}}</td>
 						 		 </tr>
 						 		 {%endfor%}
 
