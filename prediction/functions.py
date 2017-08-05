@@ -458,6 +458,9 @@ def scsmCalculation():
 		sc=Issue.objects.get(name='CREAM').snf
 
 		scsm=((qwm*swm)-(qc*sc))/(qwm-qc)
+
+
+
 		return  scsm
 
 	except Exception as e:
@@ -467,11 +470,13 @@ def scsmCalculation():
 def psmpCalculation(pcsm):
 
 	try:
-		snf_yield=GeneralCalculation.objects.get(code=8).value
+		snf_yield=GeneralCalculation.objects.get(code=20).value
 		scsm=scsmCalculation()
 		ssmp = Issue.objects.get(name='SMP').snf
 
-		psmp=(pcsm*scsm*snf_yield)/ssmp
+
+
+		psmp=(pcsm*(scsm/100)*(snf_yield/100))/(ssmp/100)
 
 		return psmp
 	except Exception as e:
@@ -557,10 +562,10 @@ def interMilkTransfer(shortage_list,surplus_list,total_requirement_diary_cpd,dia
 	surplus_value=0
 	shortage_value=0
 
-	print "surplus"
-	print surplus_list
-	print "shortage"
-	print shortage_list
+	# print "surplus"
+	# print surplus_list
+	# print "shortage"
+	# print shortage_list
 
 	diary_after_stock_transfer=[]
 	if bool(surplus_list):
@@ -650,15 +655,20 @@ def wmBalancing(after_transfer_diary_list,month):
 			if max_allowable_reconstitution < after_transfer_value:
 				wm_purchase = after_transfer_value - max_allowable_reconstitution
 				purchase_rate = GeneralCalculation.objects.get(code=8).value
-				transaction_item={'transaction':"WM Purchased:" + str('{0:.4f}'.format(wm_purchase)) + ", Amount:" + str(
-					'{0:.4f}'.format(wm_purchase * purchase_rate))}
-				wm_after_stock_transfer.append(transaction_item)
+
 
 				reconstitution_amount = max_allowable_reconstitution
 			else:
 				reconstitution_amount = max_allowable_reconstitution - after_transfer_value
 
 			if reconstitution_amount != 0:
+
+				transaction_item = {
+					'transaction': "WM Reconstituted:" + str(reconstitution_amount)}
+				wm_after_stock_transfer.append(transaction_item)
+
+
+
 
 				reconstitution_from_smp = reconstitution_amount * GeneralCalculation.objects.get(code=2).value / 100
 				try:
@@ -672,7 +682,7 @@ def wmBalancing(after_transfer_diary_list,month):
 					cream_total_smp_reconstitution = reconstitution_from_smp * cream_ratio
 					water_total_smp_reconstitution = reconstitution_from_smp * water_ratio
 
-					transaction_item={'transaction':" WM Reconstituted From SMP:"+str('{0:.4f}'.format(reconstitution_from_smp))}
+					transaction_item={'transaction':" WM Reconstituted From SMP:"+str(reconstitution_from_smp)}
 
 					wm_after_stock_transfer.append(transaction_item)
 				except Exception as e:
@@ -696,7 +706,37 @@ def wmBalancing(after_transfer_diary_list,month):
 
 
 				transaction_item={'transaction':" WM Reconstituted From WMP:" + str(
-					'{0:.4f}'.format(reconstitution_from_wmp))}
+					reconstitution_from_wmp)}
+				wm_after_stock_transfer.append(transaction_item)
+
+				transaction_item = {'transaction': " Water for Reconstitution From SMP:" + str(
+					water_total_smp_reconstitution)}
+				wm_after_stock_transfer.append(transaction_item)
+
+				transaction_item = {'transaction': " Cream for Reconstitution From SMP:" + str(
+					cream_total_smp_reconstitution)}
+				wm_after_stock_transfer.append(transaction_item)
+
+				transaction_item = {'transaction': " SMP for Reconstitution From SMP:" + str(
+					smp_total_smp_reconstitution)}
+				wm_after_stock_transfer.append(transaction_item)
+				transaction_item = {'transaction': " Water for Reconstitution From WMP:" + str(
+					water_total_wmp_reconstitution)}
+				wm_after_stock_transfer.append(transaction_item)
+
+				transaction_item = {'transaction': " WMP for Reconstitution From WMP:" + str(
+					wmp_total_wmp_reconstitution)}
+				wm_after_stock_transfer.append(transaction_item)
+
+				transaction_item = {'transaction': " SMP Obtained in Reconstitution From WMP:" + str(
+					smp_total_wmp_reconstitution)}
+				wm_after_stock_transfer.append(transaction_item)
+
+
+
+				transaction_item = {
+					'transaction': "WM Purchased:" + str(wm_purchase) + ", Amount:" + str(
+						wm_purchase * purchase_rate)}
 				wm_after_stock_transfer.append(transaction_item)
 
 
@@ -708,8 +748,10 @@ def wmBalancing(after_transfer_diary_list,month):
 
 			wm_for_sale = after_transfer_value * sale_percentage / 100
 
-			transaction_item={'transaction':" WM Sold:" + str('{0:.4f}'.format(wm_for_sale)) + ", Amount:" + str(
-				'{0:.4f}'.format(wm_for_sale * sale_rate))}
+
+
+			transaction_item = {'transaction': " WM Sold:" + str(wm_for_sale) + ", Amount:" + str(
+				wm_for_sale * sale_rate)}
 
 			wm_after_stock_transfer.append(transaction_item)
 
@@ -717,7 +759,9 @@ def wmBalancing(after_transfer_diary_list,month):
 			csm_convert_percentage = GeneralCalculation.objects.get(code=5).value
 			wm_converted_to_csm = after_transfer_value * csm_convert_percentage / 100
 
-			transaction_item={'transaction':" WM Converted to CSM:"+str('{0:.4f}'.format(wm_converted_to_csm))}
+
+
+			transaction_item = {'transaction': " WM Converted to CSM:" + str(wm_converted_to_csm)}
 			wm_after_stock_transfer.append(transaction_item)
 
 
@@ -725,38 +769,73 @@ def wmBalancing(after_transfer_diary_list,month):
 			csm_cream_ratio = -1 * (
 			qcValueCSM() / (qwmValueCSM() - qcValueCSM()))
 
-			wm_total_csm = wm_converted_to_csm * csm_wm_ratio
-			cream_total_csm = wm_converted_to_csm * csm_cream_ratio
+
 
 			scsm = scsmCalculation()
+			csm_smp_conversion_percentage = GeneralCalculation.objects.get(code=7).value
+			# pwm_for_conversion = wm_converted_to_csm * csm_smp_conversion_percentage / 100
+			pcsm_for_conversion=wm_converted_to_csm/csm_wm_ratio
 
-			transaction_item={'transaction':" SNF Percentage of CSM:" + str('{0:.4f}'.format(scsm))}
+			# wm_total_csm = wm_converted_to_csm * csm_wm_ratio
+			# cream_total_csm = wm_converted_to_csm * csm_cream_ratio
+			wm_total_csm = wm_converted_to_csm
+			cream_total_csm=pcsm_for_conversion*csm_cream_ratio
 
-			wm_after_stock_transfer.append(transaction_item)
+
 
 			csm_sale_percentage = GeneralCalculation.objects.get(code=6).value
 			csm_sale_rate = GeneralCalculation.objects.get(code=10).value
-			csm_sold = wm_converted_to_csm * csm_sale_percentage / 100
+			csm_sold = pcsm_for_conversion * csm_sale_percentage / 100
 			csm_sold_amount = csm_sold * csm_sale_rate
 
 
-			transaction_item={'transaction':" CSM Sold:" + str('{0:.4f}'.format(csm_sold)) + ", Amount:" + str(
-				'{0:.4f}'.format(csm_sold_amount))}
-			wm_after_stock_transfer.append(transaction_item)
 
-
-			csm_smp_conversion_percentage = GeneralCalculation.objects.get(code=7).value
-
-			pcsm_for_conversion=wm_converted_to_csm * csm_smp_conversion_percentage / 100
-
-			csm_converted_to_smp =psmpCalculation(pcsm_for_conversion)
-
-			transaction_item={'transaction':" CSM Converted to SMP:" + str('{0:.4f}'.format(csm_converted_to_smp))}
+			transaction_item = {
+				'transaction': " Quantity of CSM Obtained:" + str(pcsm_for_conversion)}
 			wm_after_stock_transfer.append(transaction_item)
 
 
 
-		resultitem={'diary':item['diary'],'after_transfer':str(item['type'])+" : "+str('{0:.4f}'.format(item['value'])),'transactions':wm_after_stock_transfer,'wmp_used':wmp_total_wmp_reconstitution
+			transaction_item = {
+				'transaction': " Quantity of Cream Obtained in CSM Conversion:" + str(pcsm_for_conversion * csm_cream_ratio)}
+
+
+			wm_after_stock_transfer.append(transaction_item)
+
+
+
+			transaction_item = {'transaction': " SNF Percentage of CSM:" + str(scsm)}
+
+			wm_after_stock_transfer.append(transaction_item)
+
+
+
+			transaction_item = {'transaction': " CSM Sold:" + str(csm_sold) + ", Amount:" +str(csm_sold_amount)}
+
+			wm_after_stock_transfer.append(transaction_item)
+
+
+
+
+			csm_converted_to_smp_display=pcsm_for_conversion*(csm_smp_conversion_percentage/100)
+
+			csm_converted_to_smp = psmpCalculation(csm_converted_to_smp_display)
+
+
+
+			transaction_item = {
+				'transaction': " CSM Converted to SMP:" + str(csm_converted_to_smp_display)}
+			wm_after_stock_transfer.append(transaction_item)
+
+
+
+			transaction_item = {
+				'transaction': " Quantity of SMP Obtained from CSM:" + str(csm_converted_to_smp)}
+			wm_after_stock_transfer.append(transaction_item)
+
+
+
+		resultitem={'diary':item['diary'],'after_transfer':str(item['type'])+" : "+str(item['value']),'transactions':wm_after_stock_transfer,'wmp_used':wmp_total_wmp_reconstitution
 			,'smp_used_smp':smp_total_smp_reconstitution,'smp_used_wmp':smp_total_wmp_reconstitution,'converted_smp':csm_converted_to_smp,'cream_used_csm':cream_total_csm
 					,'cream_used_smp':cream_total_smp_reconstitution,'wm_used_csm':wm_total_csm,'water_used_wmp':water_total_wmp_reconstitution
 					,'water_used_smp':water_total_smp_reconstitution}
@@ -766,6 +845,173 @@ def wmBalancing(after_transfer_diary_list,month):
 
 
 	return wm_balanced_diarylist
+
+def wmBalancingReportFinance(after_transfer_diary_list,month):
+	wm_balanced_diarylist=[]
+	wm_purchase_list=[]
+	for item in after_transfer_diary_list:
+
+
+		after_transfer_value = item['value']
+		wm_after_stock_transfer=[]
+
+		wmp_total_wmp_reconstitution=0
+		smp_total_smp_reconstitution=0
+		smp_total_wmp_reconstitution=0
+		csm_converted_to_smp=0
+		cream_total_csm=0
+		cream_total_smp_reconstitution=0
+		wm_total_csm=0
+		water_total_wmp_reconstitution=0
+		water_total_smp_reconstitution=0
+		wm_purchase_amount=0
+		if item['type'] =="Shortage":
+
+			procurement_of_month = 0
+			try:
+				diary=Diary.objects.get(name=item['diary'])
+				Awm_obj = ActualWMProcurement.objects.get(diary=diary, month=month)
+				procurement_of_month = Awm_obj.targetProcurement
+			except Exception as e:
+				print "Exception handled wmBalancing in line 640"
+
+			max_allowable_reconstitution = procurement_of_month * GeneralCalculation.objects.get(code=1).value / 100
+
+
+
+			reconstitution_amount = 0
+
+
+
+			if max_allowable_reconstitution < after_transfer_value:
+				wm_purchase = after_transfer_value - max_allowable_reconstitution
+				purchase_rate = GeneralCalculation.objects.get(code=8).value
+				wm_purchase_amount=wm_purchase * purchase_rate
+				transaction_item={'transaction':"WM Purchased:" + str(wm_purchase) + ", Amount:" + str(
+					wm_purchase_amount)}
+				wm_after_stock_transfer.append(transaction_item)
+
+				reconstitution_amount = max_allowable_reconstitution
+			else:
+				reconstitution_amount = max_allowable_reconstitution - after_transfer_value
+
+			if reconstitution_amount != 0:
+
+				reconstitution_from_smp = reconstitution_amount * GeneralCalculation.objects.get(code=2).value / 100
+				try:
+
+					quantity_of_water = 100 - qcReconstitutionValueSmp() - qsmpReconstitutionValueSmp()
+					cream_ratio = qcReconstitutionValueSmp() / 100
+					smp_ratio = qsmpReconstitutionValueSmp() / 100
+					water_ratio = quantity_of_water / 100
+
+					smp_total_smp_reconstitution = reconstitution_from_smp * smp_ratio
+					cream_total_smp_reconstitution = reconstitution_from_smp * cream_ratio
+					water_total_smp_reconstitution = reconstitution_from_smp * water_ratio
+
+					transaction_item={'transaction':" WM Reconstituted From SMP:"+str(reconstitution_from_smp)}
+
+					wm_after_stock_transfer.append(transaction_item)
+				except Exception as e:
+					print  "Exception Handled wmBalancing At 678 "
+
+				reconstitution_from_wmp = reconstitution_amount * GeneralCalculation.objects.get(code=3).value / 100
+
+				try:
+
+					qw = GeneralCalculation.objects.get(code=18).value
+
+					water_ratio_wmp=qw/(qw+qwmpReconstitutionValueWMP()-qsmpReconstitutionValueWMP())
+					wmp_ratio_wmp=qwmpReconstitutionValueWMP()/(qw+qwmpReconstitutionValueWMP()-qsmpReconstitutionValueWMP())
+					smp_ratio_wmp=(-1*qsmpReconstitutionValueWMP())/(qw+qwmpReconstitutionValueWMP()-qsmpReconstitutionValueWMP())
+
+					water_total_wmp_reconstitution=reconstitution_from_wmp*water_ratio_wmp
+					wmp_total_wmp_reconstitution=reconstitution_from_wmp*wmp_ratio_wmp
+					smp_total_wmp_reconstitution=reconstitution_from_wmp*smp_ratio_wmp
+				except Exception as e:
+					print "Exception Handled  wmBalancing At 695 "
+
+
+				transaction_item={'transaction':" WM Reconstituted From WMP:" + str(
+					reconstitution_from_wmp)}
+				wm_after_stock_transfer.append(transaction_item)
+
+
+		else:
+
+
+			sale_percentage = GeneralCalculation.objects.get(code=4).value
+			sale_rate = GeneralCalculation.objects.get(code=9).value
+
+			wm_for_sale = after_transfer_value * sale_percentage / 100
+
+			transaction_item={'transaction':" WM Sold:" + str(wm_for_sale) + ", Amount:" + str(
+				wm_for_sale * sale_rate)}
+
+			wm_after_stock_transfer.append(transaction_item)
+
+
+			csm_convert_percentage = GeneralCalculation.objects.get(code=5).value
+			wm_converted_to_csm = after_transfer_value * csm_convert_percentage / 100
+
+			transaction_item={'transaction':" WM Converted to CSM:"+str(wm_converted_to_csm)}
+			wm_after_stock_transfer.append(transaction_item)
+
+
+			csm_wm_ratio = qwmValueCSM() / (qwmValueCSM() - qcValueCSM())
+			csm_cream_ratio = -1 * (
+			qcValueCSM() / (qwmValueCSM() - qcValueCSM()))
+
+
+			csm_smp_conversion_percentage = GeneralCalculation.objects.get(code=7).value
+			pcsm_for_conversion = wm_converted_to_csm / csm_wm_ratio
+
+			wm_total_csm = wm_converted_to_csm
+			cream_total_csm =  pcsm_for_conversion * csm_cream_ratio
+
+
+			scsm = scsmCalculation()
+
+			transaction_item={'transaction':" SNF Percentage of CSM:" + str(scsm)}
+
+			wm_after_stock_transfer.append(transaction_item)
+
+			csm_sale_percentage = GeneralCalculation.objects.get(code=6).value
+			csm_sale_rate = GeneralCalculation.objects.get(code=10).value
+			csm_sold = pcsm_for_conversion * csm_sale_percentage / 100
+
+			csm_sold_amount = csm_sold * csm_sale_rate
+
+
+			transaction_item={'transaction':" CSM Sold:" + str(csm_sold) + ", Amount:" + str(
+				csm_sold_amount)}
+			wm_after_stock_transfer.append(transaction_item)
+
+			csm_converted_to_smp_display = pcsm_for_conversion * (csm_smp_conversion_percentage / 100)
+
+
+			csm_converted_to_smp =psmpCalculation(csm_converted_to_smp_display)
+
+			transaction_item={'transaction':" CSM Converted to SMP:" + str(csm_converted_to_smp_display)}
+			wm_after_stock_transfer.append(transaction_item)
+
+
+
+		resultitem={'diary':item['diary'],'after_transfer':str(item['type'])+" : "+str(item['value']),'transactions':wm_after_stock_transfer,'wmp_used':wmp_total_wmp_reconstitution
+			,'smp_used_smp':smp_total_smp_reconstitution,'smp_used_wmp':smp_total_wmp_reconstitution,'converted_smp':csm_converted_to_smp,'cream_used_csm':cream_total_csm
+					,'cream_used_smp':cream_total_smp_reconstitution,'wm_used_csm':wm_total_csm,'water_used_wmp':water_total_wmp_reconstitution
+					,'water_used_smp':water_total_smp_reconstitution}
+		wm_balanced_diarylist.append(resultitem)
+
+
+		purchase_item={'diary':item['diary'],'Amount':wm_purchase_amount}
+		wm_purchase_list.append(purchase_item)
+
+
+
+
+	return wm_balanced_diarylist,wm_purchase_list
+
 
 def wmBalancingReport(after_transfer_diary_list,month):
 	wm_balanced_diarylist=[]
@@ -814,8 +1060,8 @@ def wmBalancingReport(after_transfer_diary_list,month):
 			if max_allowable_reconstitution < after_transfer_value:
 				wm_purchase = after_transfer_value - max_allowable_reconstitution
 				purchase_rate = GeneralCalculation.objects.get(code=8).value
-				transaction_item={'transaction':"WM Purchased:" + str('{0:.4f}'.format(wm_purchase)) + ", Amount:" + str(
-					'{0:.4f}'.format(wm_purchase * purchase_rate))}
+				transaction_item={'transaction':"WM Purchased:" + str(wm_purchase) + ", Amount:" + str(
+					wm_purchase * purchase_rate)}
 				wm_after_stock_transfer.append(transaction_item)
 
 				wm_purchase_union+=wm_purchase
@@ -838,7 +1084,7 @@ def wmBalancingReport(after_transfer_diary_list,month):
 					cream_total_smp_reconstitution = reconstitution_from_smp * cream_ratio
 					water_total_smp_reconstitution = reconstitution_from_smp * water_ratio
 
-					transaction_item={'transaction':" WM Reconstituted From SMP:"+str('{0:.4f}'.format(reconstitution_from_smp))}
+					transaction_item={'transaction':" WM Reconstituted From SMP:"+str(reconstitution_from_smp)}
 
 					wm_after_stock_transfer.append(transaction_item)
 				except Exception as e:
@@ -862,7 +1108,7 @@ def wmBalancingReport(after_transfer_diary_list,month):
 
 
 				transaction_item={'transaction':" WM Reconstituted From WMP:" + str(
-					'{0:.4f}'.format(reconstitution_from_wmp))}
+					reconstitution_from_wmp)}
 				wm_after_stock_transfer.append(transaction_item)
 
 
@@ -874,8 +1120,8 @@ def wmBalancingReport(after_transfer_diary_list,month):
 
 			wm_for_sale = after_transfer_value * sale_percentage / 100
 
-			transaction_item={'transaction':" WM Sold:" + str('{0:.4f}'.format(wm_for_sale)) + ", Amount:" + str(
-				'{0:.4f}'.format(wm_for_sale * sale_rate))}
+			transaction_item={'transaction':" WM Sold:" + str(wm_for_sale) + ", Amount:" + str(
+				wm_for_sale * sale_rate)}
 
 			wm_sale_union+=wm_for_sale
 
@@ -885,7 +1131,7 @@ def wmBalancingReport(after_transfer_diary_list,month):
 			csm_convert_percentage = GeneralCalculation.objects.get(code=5).value
 			wm_converted_to_csm = after_transfer_value * csm_convert_percentage / 100
 
-			transaction_item={'transaction':" WM Converted to CSM:"+str('{0:.4f}'.format(wm_converted_to_csm))}
+			transaction_item={'transaction':" WM Converted to CSM:"+str(wm_converted_to_csm)}
 			wm_after_stock_transfer.append(transaction_item)
 
 
@@ -893,36 +1139,40 @@ def wmBalancingReport(after_transfer_diary_list,month):
 			csm_cream_ratio = -1 * (
 			qcValueCSM() / (qwmValueCSM() - qcValueCSM()))
 
-			wm_total_csm = wm_converted_to_csm * csm_wm_ratio
-			cream_total_csm = wm_converted_to_csm * csm_cream_ratio
+			csm_smp_conversion_percentage = GeneralCalculation.objects.get(code=7).value
+
+			pcsm_for_conversion = wm_converted_to_csm / csm_wm_ratio
+
+
+
+			wm_total_csm = wm_converted_to_csm
+			cream_total_csm = pcsm_for_conversion * csm_cream_ratio
 
 			scsm = scsmCalculation()
 
-			transaction_item={'transaction':" SNF Percentage of CSM:" + str('{0:.4f}'.format(scsm))}
+
+
+			transaction_item={'transaction':" SNF Percentage of CSM:" + str(scsm)}
 
 			wm_after_stock_transfer.append(transaction_item)
 
 			csm_sale_percentage = GeneralCalculation.objects.get(code=6).value
 			csm_sale_rate = GeneralCalculation.objects.get(code=10).value
-			csm_sold = wm_converted_to_csm * csm_sale_percentage / 100
+			csm_sold = pcsm_for_conversion * csm_sale_percentage / 100
 			csm_sold_amount = csm_sold * csm_sale_rate
 
 			csm_sale_union+=csm_sold
 
-			transaction_item={'transaction':" CSM Sold:" + str('{0:.4f}'.format(csm_sold)) + ", Amount:" + str(
-				'{0:.4f}'.format(csm_sold_amount))}
+			transaction_item={'transaction':" CSM Sold:" + str(csm_sold) + ", Amount:" + str(
+				csm_sold_amount)}
 			wm_after_stock_transfer.append(transaction_item)
 
+			csm_converted_to_smp_display = pcsm_for_conversion * (csm_smp_conversion_percentage / 100)
 
-			csm_smp_conversion_percentage = GeneralCalculation.objects.get(code=7).value
-			pcsm_for_conversion=wm_converted_to_csm * csm_smp_conversion_percentage / 100
-
-
-
-			csm_converted_to_smp =psmpCalculation(pcsm_for_conversion)
+			csm_converted_to_smp =psmpCalculation(csm_converted_to_smp_display)
 			smp_from_conversion += csm_converted_to_smp
 
-			transaction_item={'transaction':" CSM Converted to SMP:" + str('{0:.4f}'.format(csm_converted_to_smp))}
+			transaction_item={'transaction':" CSM Converted to SMP:" + str(csm_converted_to_smp_display)}
 			wm_after_stock_transfer.append(transaction_item)
 
 		wm_reconstitution_union+=reconstitution_amount
@@ -930,7 +1180,7 @@ def wmBalancingReport(after_transfer_diary_list,month):
 
 
 
-		resultitem={'diary':item['diary'],'after_transfer':str(item['type'])+" : "+str('{0:.4f}'.format(item['value'])),'transactions':wm_after_stock_transfer,'wmp_used':wmp_total_wmp_reconstitution
+		resultitem={'diary':item['diary'],'after_transfer':str(item['type'])+" : "+str(item['value']),'transactions':wm_after_stock_transfer,'wmp_used':wmp_total_wmp_reconstitution
 			,'smp_used_smp':smp_total_smp_reconstitution,'smp_used_wmp':smp_total_wmp_reconstitution,'converted_smp':csm_converted_to_smp,'cream_used_csm':cream_total_csm
 					,'cream_used_smp':cream_total_smp_reconstitution,'wm_used_csm':wm_total_csm,'water_used_wmp':water_total_wmp_reconstitution
 					,'water_used_smp':water_total_smp_reconstitution}
@@ -939,9 +1189,216 @@ def wmBalancingReport(after_transfer_diary_list,month):
 
 
 
-	return wm_balanced_diarylist,wm_reconstitution_union,wm_purchase_union,wm_sale_union,csm_sale_union,csm_converted_to_smp,cream_reconstitution_union,smp_from_conversion
+	return wm_balanced_diarylist,wm_reconstitution_union,wm_purchase_union,wm_sale_union,csm_sale_union,smp_from_conversion,cream_reconstitution_union,smp_from_conversion
+
+def wmBalancingReportDiaryWise(after_transfer_diary_list,month,current_diary):
+	wm_balanced_diarylist=[]
+	wm_reconstitution_union=0
+	wm_purchase_union=0
+	wm_sale_union=0
+	csm_sale_union=0
+	cream_reconstitution_union=0
+
+	smp_rc_smp_union=0
+	smp_rc_wmp_union=0
+	water_rc_smp_union=0
+	water_rc_wmp_union=0
+	wmp_rc_wmp_union=0
+
+	smp_from_conversion=0
+	reconstitution_amount=0
+	csm_converted_to_smp=0
+	wm_for_csm=0
+	cream_for_csm=0
+	smp_from_conversion_union=0
+	wm_converted_to_csm_union=0
+	csm_for_conversion=0
+	for item in after_transfer_diary_list:
 
 
+		after_transfer_value = item['value']
+		wm_after_stock_transfer=[]
+
+		wmp_total_wmp_reconstitution=0
+		smp_total_smp_reconstitution=0
+		smp_total_wmp_reconstitution=0
+		csm_converted_to_smp=0
+		cream_total_csm=0
+		cream_total_smp_reconstitution=0
+		wm_total_csm=0
+		water_total_wmp_reconstitution=0
+		water_total_smp_reconstitution=0
+
+		if item['type'] =="Shortage":
+
+			procurement_of_month = 0
+			try:
+				diary=Diary.objects.get(name=item['diary'])
+				Awm_obj = ActualWMProcurement.objects.get(diary=diary, month=month)
+				procurement_of_month = Awm_obj.targetProcurement
+			except Exception as e:
+				print "Exception handled wmBalancingReport in line 804"
+
+			max_allowable_reconstitution = procurement_of_month * GeneralCalculation.objects.get(code=1).value / 100
+
+
+
+			reconstitution_amount = 0
+
+
+
+			if max_allowable_reconstitution < after_transfer_value:
+				wm_purchase = after_transfer_value - max_allowable_reconstitution
+				purchase_rate = GeneralCalculation.objects.get(code=8).value
+				transaction_item={'transaction':"WM Purchased:" + str(wm_purchase) + ", Amount:" + str(
+					wm_purchase * purchase_rate)}
+				wm_after_stock_transfer.append(transaction_item)
+				if current_diary == item['diary']:
+					wm_purchase_union+=wm_purchase
+
+				reconstitution_amount = max_allowable_reconstitution
+			else:
+				reconstitution_amount = max_allowable_reconstitution - after_transfer_value
+
+			if reconstitution_amount != 0:
+
+				reconstitution_from_smp = reconstitution_amount * GeneralCalculation.objects.get(code=2).value / 100
+				try:
+
+					quantity_of_water = 100 - qcReconstitutionValueSmp() - qsmpReconstitutionValueSmp()
+					cream_ratio = qcReconstitutionValueSmp() / 100
+					smp_ratio = qsmpReconstitutionValueSmp() / 100
+					water_ratio = quantity_of_water / 100
+
+					smp_total_smp_reconstitution = reconstitution_from_smp * smp_ratio
+					cream_total_smp_reconstitution = reconstitution_from_smp * cream_ratio
+					water_total_smp_reconstitution = reconstitution_from_smp * water_ratio
+
+					transaction_item={'transaction':" WM Reconstituted From SMP:"+str(reconstitution_from_smp)}
+
+					wm_after_stock_transfer.append(transaction_item)
+				except Exception as e:
+					print  "Exception Handled wmBalancingReport At 845 "
+
+				reconstitution_from_wmp = reconstitution_amount * GeneralCalculation.objects.get(code=3).value / 100
+
+				try:
+
+					qw = GeneralCalculation.objects.get(code=18).value
+
+					water_ratio_wmp=qw/(qw+qwmpReconstitutionValueWMP()-qsmpReconstitutionValueWMP())
+					wmp_ratio_wmp=qwmpReconstitutionValueWMP()/(qw+qwmpReconstitutionValueWMP()-qsmpReconstitutionValueWMP())
+					smp_ratio_wmp=(-1*qsmpReconstitutionValueWMP())/(qw+qwmpReconstitutionValueWMP()-qsmpReconstitutionValueWMP())
+
+					water_total_wmp_reconstitution=reconstitution_from_wmp*water_ratio_wmp
+					wmp_total_wmp_reconstitution=reconstitution_from_wmp*wmp_ratio_wmp
+					smp_total_wmp_reconstitution=reconstitution_from_wmp*smp_ratio_wmp
+				except Exception as e:
+					print "Exception Handled wmBalancingReport At  861 "
+
+
+				transaction_item={'transaction':" WM Reconstituted From WMP:" + str(
+					reconstitution_from_wmp)}
+				wm_after_stock_transfer.append(transaction_item)
+
+
+		else:
+
+
+			sale_percentage = GeneralCalculation.objects.get(code=4).value
+			sale_rate = GeneralCalculation.objects.get(code=9).value
+
+			wm_for_sale = after_transfer_value * sale_percentage / 100
+
+			transaction_item={'transaction':" WM Sold:" + str(wm_for_sale) + ", Amount:" + str(
+				wm_for_sale * sale_rate)}
+			if current_diary == item['diary']:
+				wm_sale_union+=wm_for_sale
+
+			wm_after_stock_transfer.append(transaction_item)
+
+
+			csm_convert_percentage = GeneralCalculation.objects.get(code=5).value
+			wm_converted_to_csm = after_transfer_value * csm_convert_percentage / 100
+			if item['diary']==current_diary:
+				wm_converted_to_csm_union+=wm_converted_to_csm
+
+			transaction_item={'transaction':" WM Converted to CSM:"+str(wm_converted_to_csm)}
+			wm_after_stock_transfer.append(transaction_item)
+
+
+			csm_wm_ratio = qwmValueCSM() / (qwmValueCSM() - qcValueCSM())
+			csm_cream_ratio = -1 * (
+			qcValueCSM() / (qwmValueCSM() - qcValueCSM()))
+
+			csm_smp_conversion_percentage = GeneralCalculation.objects.get(code=7).value
+			pcsm_for_conversion = wm_converted_to_csm / csm_wm_ratio
+
+			wm_total_csm = wm_converted_to_csm
+			if item['diary']==current_diary:
+				wm_for_csm=+wm_total_csm
+				cream_for_csm+=cream_total_csm
+
+
+			cream_total_csm =  pcsm_for_conversion * csm_cream_ratio
+
+			scsm = scsmCalculation()
+
+			transaction_item={'transaction':" SNF Percentage of CSM:" + str(scsm)}
+
+			wm_after_stock_transfer.append(transaction_item)
+
+			csm_sale_percentage = GeneralCalculation.objects.get(code=6).value
+			csm_sale_rate = GeneralCalculation.objects.get(code=10).value
+			csm_sold = pcsm_for_conversion * csm_sale_percentage / 100
+			csm_sold_amount = csm_sold * csm_sale_rate
+			if current_diary == item['diary']:
+				csm_sale_union+=csm_sold
+
+			transaction_item={'transaction':" CSM Sold:" + str(csm_sold) + ", Amount:" + str(
+				csm_sold_amount)}
+			wm_after_stock_transfer.append(transaction_item)
+
+
+
+
+			if item['diary']==current_diary:
+				csm_for_conversion+=pcsm_for_conversion
+
+			csm_converted_to_smp_display = pcsm_for_conversion * (csm_smp_conversion_percentage / 100)
+			csm_converted_to_smp =psmpCalculation(csm_converted_to_smp_display)
+
+			if item['diary']==current_diary:
+				smp_from_conversion += csm_converted_to_smp
+
+
+
+			transaction_item={'transaction':" CSM Converted to SMP:" + str(csm_converted_to_smp_display)}
+			wm_after_stock_transfer.append(transaction_item)
+
+		if current_diary==item['diary']:
+			wm_reconstitution_union+=reconstitution_amount
+			cream_reconstitution_union+=cream_total_smp_reconstitution
+			smp_rc_smp_union +=smp_total_smp_reconstitution
+			smp_rc_wmp_union+=smp_total_wmp_reconstitution
+			water_rc_smp_union+=water_total_smp_reconstitution
+			water_rc_wmp_union+=water_total_wmp_reconstitution
+			wmp_rc_wmp_union+=wmp_total_wmp_reconstitution
+
+
+
+
+
+		resultitem={'diary':item['diary'],'after_transfer':str(item['type'])+" : "+str(item['value']),'transactions':wm_after_stock_transfer,'wmp_used':wmp_total_wmp_reconstitution
+			,'smp_used_smp':smp_total_smp_reconstitution,'smp_used_wmp':smp_total_wmp_reconstitution,'converted_smp':csm_converted_to_smp,'cream_used_csm':cream_total_csm
+					,'cream_used_smp':cream_total_smp_reconstitution,'wm_used_csm':wm_total_csm,'water_used_wmp':water_total_wmp_reconstitution
+					,'water_used_smp':water_total_smp_reconstitution}
+		wm_balanced_diarylist.append(resultitem)
+
+
+
+
+	return wm_balanced_diarylist,wm_reconstitution_union,wm_purchase_union,wm_sale_union,csm_sale_union,smp_from_conversion,cream_reconstitution_union,smp_from_conversion,wm_for_csm,smp_rc_smp_union,smp_rc_wmp_union,water_rc_smp_union,water_rc_wmp_union,wmp_rc_wmp_union,cream_for_csm,wm_converted_to_csm_union,csm_for_conversion
 
 
 
@@ -1049,13 +1506,13 @@ def creamBalancing(after_transfer_diary_list):
 		cream_after_stock_transfer=""
 		if item['type'] == "Shortage":
 			try:
-				cream_after_stock_transfer=" Cream Purchased:"+str('{0:.4f}'.format(after_transfer_value))+" ,Amount:"+str('{0:.4f}'.format(after_transfer_value*GeneralCalculation.objects.get(code=15).value))
+				cream_after_stock_transfer=" Cream Purchased:"+str(after_transfer_value)+" ,Amount:"+str(after_transfer_value*GeneralCalculation.objects.get(code=15).value)
 			except Exception as e:
 				print "Exception Handled At 848"
 			cream_after_stock_transfer+=""
 		else:
 			try:
-				cream_after_stock_transfer=" Cream sold:"+str('{0:.4f}'.format(after_transfer_value))+" ,Amount:"+str('{0:.4f}'.format(after_transfer_value*GeneralCalculation.objects.get(code=16).value))
+				cream_after_stock_transfer=" Cream sold:"+str(after_transfer_value)+" ,Amount:"+str(after_transfer_value*GeneralCalculation.objects.get(code=16).value)
 			except Exception as e:
 				print "Exception Handled At 848"
 			cream_after_stock_transfer+=""
@@ -1063,7 +1520,7 @@ def creamBalancing(after_transfer_diary_list):
 
 
 		resultitem = {'diary': item['diary'],
-					  'after_transfer': str(item['type']) + " : " + str('{0:.4f}'.format(after_transfer_value)),
+					  'after_transfer': str(item['type']) + " : " + str(after_transfer_value),
 					  'transactions': cream_after_stock_transfer}
 		cream_balanced_diarylist.append(resultitem)
 	return cream_balanced_diarylist
@@ -1080,7 +1537,7 @@ def creamBalancingReport(after_transfer_diary_list):
 		cream_after_stock_transfer=""
 		if item['type'] == "Shortage":
 			try:
-				cream_after_stock_transfer=" Cream Purchased:"+str('{0:.4f}'.format(after_transfer_value))+" ,Amount:"+str('{0:.4f}'.format(after_transfer_value*GeneralCalculation.objects.get(code=15).value))
+				cream_after_stock_transfer=" Cream Purchased:"+str(after_transfer_value)+" ,Amount:"+str(after_transfer_value*GeneralCalculation.objects.get(code=15).value)
 				cream_purchased+=after_transfer_value
 
 			except Exception as e:
@@ -1088,7 +1545,7 @@ def creamBalancingReport(after_transfer_diary_list):
 			cream_after_stock_transfer+=""
 		else:
 			try:
-				cream_after_stock_transfer=" Cream sold:"+str('{0:.4f}'.format(after_transfer_value))+" ,Amount:"+str('{0:.4f}'.format(after_transfer_value*GeneralCalculation.objects.get(code=16).value))
+				cream_after_stock_transfer=" Cream sold:"+str(after_transfer_value)+" ,Amount:"+str(after_transfer_value*GeneralCalculation.objects.get(code=16).value)
 				cream_sold+=after_transfer_value
 			except Exception as e:
 				print "Exception Handled At 848"
@@ -1097,110 +1554,87 @@ def creamBalancingReport(after_transfer_diary_list):
 
 
 		resultitem = {'diary': item['diary'],
-					  'after_transfer': str(item['type']) + " : " + str('{0:.4f}'.format(after_transfer_value)),
+					  'after_transfer': str(item['type']) + " : " + str(after_transfer_value),
+					  'transactions': cream_after_stock_transfer}
+		cream_balanced_diarylist.append(resultitem)
+	return cream_balanced_diarylist,cream_purchased,cream_sold
+
+def creamBalancingReportFinance(after_transfer_diary_list):
+	cream_balanced_diarylist = []
+
+	cream_purchased=0
+	cream_sold=0
+
+	cream_purchase_list=[]
+
+	for item in after_transfer_diary_list:
+		cream_Amount=0
+		after_transfer_value = item['value']
+
+		cream_after_stock_transfer=""
+
+		if item['type'] == "Shortage":
+			try:
+				cream_Amount=after_transfer_value*GeneralCalculation.objects.get(code=15).value
+				cream_after_stock_transfer=" Cream Purchased:"+str(after_transfer_value)+" ,Amount:"+str(cream_Amount)
+				cream_purchased+=after_transfer_value
+
+			except Exception as e:
+				print "Exception Handled At 1492"
+			cream_after_stock_transfer+=""
+		else:
+			try:
+				cream_after_stock_transfer=" Cream sold:"+str(after_transfer_value)+" ,Amount:"+str(after_transfer_value*GeneralCalculation.objects.get(code=16).value)
+				cream_sold+=after_transfer_value
+			except Exception as e:
+				print "Exception Handled At 1499"
+			cream_after_stock_transfer+=""
+
+
+
+		resultitem = {'diary': item['diary'],
+					  'after_transfer': str(item['type']) + " : " + str(after_transfer_value),
+					  'transactions': cream_after_stock_transfer}
+		cream_balanced_diarylist.append(resultitem)
+
+		cream_purchase_item={'diary': item['diary'],'Amount':cream_Amount}
+		cream_purchase_list.append(cream_purchase_item)
+	return cream_balanced_diarylist,cream_purchase_list
+
+def creamBalancingReportDiaryWise(after_transfer_diary_list,current_diary):
+	cream_balanced_diarylist = []
+
+	cream_purchased=0
+	cream_sold=0
+
+	for item in after_transfer_diary_list:
+		after_transfer_value = item['value']
+
+		cream_after_stock_transfer=""
+		if item['type'] == "Shortage":
+			try:
+				cream_after_stock_transfer=" Cream Purchased:"+str(after_transfer_value)+" ,Amount:"+str(after_transfer_value*GeneralCalculation.objects.get(code=15).value)
+				if item['diary']==current_diary:
+					cream_purchased+=after_transfer_value
+
+			except Exception as e:
+				print "Exception Handled At 848"
+			cream_after_stock_transfer+=""
+		else:
+			try:
+				cream_after_stock_transfer=" Cream sold:"+str(after_transfer_value)+" ,Amount:"+str(after_transfer_value*GeneralCalculation.objects.get(code=16).value)
+				if item['diary'] == current_diary:
+					cream_sold+=after_transfer_value
+			except Exception as e:
+				print "Exception Handled At 848"
+			cream_after_stock_transfer+=""
+
+
+
+		resultitem = {'diary': item['diary'],
+					  'after_transfer': str(item['type']) + " : " + str(after_transfer_value),
 					  'transactions': cream_after_stock_transfer}
 		cream_balanced_diarylist.append(resultitem)
 	return cream_balanced_diarylist,cream_purchased,cream_sold
 
 
-"""def interMilkTransfer(shortage_list,surplus_list,total_requirement_diary_cpd,diary):
-	resultitem = []
-
-	if total_requirement_diary_cpd>0:
-
-		if "KOZHIKODE" in surplus_list.keys():
-
-			if total_requirement_diary_cpd > surplus_list["KOZHIKODE"]:
-				surplus_difference = total_requirement_diary_cpd - surplus_list["KOZHIKODE"]
-
-				del surplus_list["KOZHIKODE"]
-				shortage_list["KOZHIKODE"] = surplus_difference
-			else:
-				surplus_list["KOZHIKODE"] -= total_requirement_diary_cpd
-
-			if "CENTRAL PRODUCTS" in shortage_list.keys():
-				del shortage_list["CENTRAL PRODUCTS"]
-		elif "KOZHIKODE" in shortage_list.keys():
-
-			shortage_list["KOZHIKODE"] -= total_requirement_diary_cpd
-			shortage_list["KOZHIKODE"] = shortage_list["KOZHIKODE"]
-
-			if shortage_list["KOZHIKODE"]<0:
-				shortage_list["KOZHIKODE"]=shortage_list["KOZHIKODE"]*(-1)
-			if "CENTRAL PRODUCTS" in shortage_list.keys():
-				del shortage_list["CENTRAL PRODUCTS"]
-
-
-		result = {"fromdiary": "KOZHIKODE", "todiary": "CENTRAL PRODUCTS", "value": total_requirement_diary_cpd}
-		resultitem.append(result)
-
-
-	inter_stock_transfer_list=InterStockMilkTransferOrder.objects.all()
-
-	print str(shortage_list)
-	print str(surplus_list)
-
-
-	for item in inter_stock_transfer_list:
-		from_diary= str(item.from_diary.name)
-		to_diary=str(item.to_diary.name)
-		if item.priority!=1:
-			if from_diary in surplus_list.keys() and to_diary in shortage_list.keys():
-				if surplus_list[from_diary]> shortage_list[to_diary]:
-					difference=surplus_list[from_diary]-shortage_list[to_diary]
-
-					result = {"fromdiary":from_diary,"todiary":to_diary,"value":shortage_list[to_diary]}
-					surplus_list[from_diary] = difference
-					del shortage_list[to_diary]
-					# print str(surplus_list)
-					# print str(shortage_list)
-				else:
-
-					difference=shortage_list[to_diary]-surplus_list[from_diary]
-
-
-					result = {"fromdiary": from_diary, "todiary": to_diary, "value": surplus_list[from_diary]}
-					shortage_list[to_diary] = difference
-
-					del surplus_list[from_diary]
-				print  result
-
-				resultitem.append(result)
-
-
-
-	value_after_stock_transfer=0
-	surplus_value=0
-	shortage_value=0
-
-	if bool(surplus_list):
-		for item,value in surplus_list.items():
-			surplus_value+=value
-	if bool(shortage_list):
-		for item, value in surplus_list.items():
-			shortage_value += value
-
-	value_after_stock_transfer=surplus_value-shortage_value
-
-	stock_transfer=[]
-
-	for item in resultitem:
-		if diary.name==item['fromdiary'] or diary.name==item['todiary']:
-			if item['fromdiary']==diary.name:
-				transfer_type="to"
-				to_or_from_diary=item['todiary']
-
-			elif item['todiary']==diary.name:
-				transfer_type="from"
-				to_or_from_diary=item['fromdiary']
-
-			result={"diary":diary.name,"type":transfer_type,"to_or_from_diary":to_or_from_diary,"value":item['value']}
-			stock_transfer.append((result))
-
-
-
-
-	# print stock_transfer
-
-	return value_after_stock_transfer,stock_transfer
-"""

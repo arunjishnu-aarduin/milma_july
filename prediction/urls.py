@@ -11,7 +11,7 @@ urlpatterns=[
     url(r'^issuerequirementUnion/',views.issuerequirementUnion,name='issuerequirementUnion'),
     url(r'^basicRequirement/',views.basicRequirement,name='basicRequirement'),
     url(r'^basicRequirementUnion/',views.basicRequirementUnion,name='basicRequirementUnion'),
-    url(r'^interStockMilkTransferUnion/',views.interStockMilkTransferUnion,name='interStockMilkTransferUnion'),
+
     url(r'^balancing/',views.balancing,name='balancing'),
     url(r'^balancingUnion/',views.balancingUnion,name='balancingUnion'),
     url(r'^generalCalculation/',views.generalCalculation,name='generalCalculation'),
@@ -19,6 +19,7 @@ urlpatterns=[
     url(r'^wmProcurementRate/',views.wmProcurementRate,name='wmProcurementRate'),
     url(r'^reportAnnual/',views.reportAnnual,name='reportAnnual'),
     url(r'^reportMAT/', views.reportMAT, name='reportMAT'),
+    url(r'^reportFinanceYear/', views.reportFinanceYear, name='reportFinanceYear'),
 
 
 
