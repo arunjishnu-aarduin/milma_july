@@ -43,9 +43,9 @@
 																									                <table class="table table-striped table-bordered table-hover dataTables-example" >
 																																		<thead>
 																																			<tr>
-																																				<td>Name</td>
-																																				<td>Fat</td>
-																																			 <td>Snf</td>
+																																				<th>Name</th>
+																																				<th>Fat</th>
+																																			 <th>Snf</th>
 
 																																			</tr>
 																																		</thead>
@@ -62,7 +62,7 @@
 																																	</table>
 																																	<form method="POST" >{% csrf_token %}
 																															        {{ form.as_table }}
-																															        <button type="submit" class="save btn btn-default">Update</button>
+																															        <button type="submit" class="ladda-button ladda-button-demo btn btn-primary"  data-style="zoom-in">Update</button>
 
 																															    </form>
 																									                    </div>

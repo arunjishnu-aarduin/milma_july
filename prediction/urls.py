@@ -20,6 +20,10 @@ urlpatterns=[
     url(r'^reportAnnual/',views.reportAnnual,name='reportAnnual'),
     url(r'^reportMAT/', views.reportMAT, name='reportMAT'),
     url(r'^reportFinanceYear/', views.reportFinanceYear, name='reportFinanceYear'),
+    url(r'^reportFinanceMonth/', views.reportFinanceMonth, name='reportFinanceMonth'),
+    url(r'^reportFinanceYearUnion/', views.reportFinanceYearUnion, name='reportFinanceYearUnion'),
+    url(r'^reportFinanceMonthUnion/', views.reportFinanceMonthUnion, name='reportFinanceMonthUnion'),
+
 
 
 

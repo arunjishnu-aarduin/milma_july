@@ -38,6 +38,34 @@
 
 		<!-- Page-Level Scripts -->
 		<script src={% static 'master/js/datatable_custom.js'%}></script>
+        <!-- For Ladda button Effect -->
+		<script>
+
+ $(document).ready(function (){
+
+
+
+		 var l = Ladda.bind('.ladda-button-demo');
+
+		 l.click(function(){
+				 // Start loading
+				 l.ladda( 'start' );
+
+				 // Timeout example
+				 // Do something in backend and then stop ladda
+				 setTimeout(function(){
+						 l.ladda('stop');
+				 },2000)
+
+
+		 });
+
+ });
+
+
+
+ </script>
+
  {% block head %}{% endblock %}
 </head>
 
@@ -88,7 +116,8 @@
 										<a href="index.html"><i class="fa fa-th-large"></i> <span class="nav-label">Reports</span> <span class="fa arrow"></span></a>
 										<ul class="nav nav-second-level collapse">
 											<li><a href="/reportAnnual/"> Annual Fat & Snf Balancing</a></li>
-											<!--<li><a href="/reportFinanceYear/"> Finance Yearly</a></li>-->
+											<li><a href="/reportFinanceYearUnion/"> Finance Yearly</a></li>
+											<li><a href="/reportFinanceMonthUnion/"> Finance Monthly</a></li>
 
 
 

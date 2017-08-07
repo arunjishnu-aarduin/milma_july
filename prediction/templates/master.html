@@ -18,6 +18,13 @@
     <link href={% static 'master/css/animate.css' %} rel="stylesheet">
     <link href={% static 'master/css/style.css' %} rel="stylesheet">
 
+	<!--loading button
+-->
+		<link rel="stylesheet" href={% static 'master/css/plugins/ladda/ladda-themeless.min.css' %}>
+		<script src={% static 'master/js/plugins/ladda/ladda.jquery.min.js' %}></script>
+		<script src={% static 'master/js/plugins/ladda/spin.min.js' %}></script>
+		<script src={% static 'master/js/plugins/ladda/ladda.min.js' %}></script>
+
 		<!-- Mainly scripts -->
 		<script src={% static 'master/js/jquery-3.1.1.min.js'%} ></script>
 		<script src={% static 'master/js/bootstrap.min.js'%}></script>
@@ -32,6 +39,35 @@
 
 		<!-- Page-Level Scripts -->
 		<script src={% static 'master/js/datatable_custom.js'%}></script>
+
+
+	<!-- For Ladda button Effect -->
+		<script>
+
+ $(document).ready(function (){
+
+
+
+		 var l = Ladda.bind('.ladda-button-demo');
+
+		 l.click(function(){
+				 // Start loading
+				 l.ladda( 'start' );
+
+				 // Timeout example
+				 // Do something in backend and then stop ladda
+				 setTimeout(function(){
+						 l.ladda('stop');
+				 },2000)
+
+
+		 });
+
+ });
+
+
+
+ </script>
 
 </head>
 
@@ -133,7 +169,10 @@
 										<a href="index.html"><i class="fa fa-th-large"></i> <span class="nav-label">Reports</span> <span class="fa arrow"></span></a>
 										<ul class="nav nav-second-level collapse">
 											<li><a href="/reportMAT/"> MATERIAL BALANCE</a></li>
-											<!--<li><a href="/reportFinanceYear/"> Finance Yearly</a></li>-->
+											<li><a href="/reportFinanceYear/"> Finance Yearly</a></li>
+											<li><a href="/reportFinanceMonth/"> Finance Monthly</a></li>
+
+
 
 
 

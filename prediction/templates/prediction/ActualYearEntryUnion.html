@@ -45,10 +45,10 @@
 									<thead>
 										<tr>
 
-                      <td>Dairy</td>
-											<td>Month</td>
+                                        <th>Dairy</th>
+											<th>Month</th>
 
-											<td>Procurement</td>
+											<th>Procurement</th>
 										</tr>
 									</thead>
 									<tbody>
@@ -63,8 +63,8 @@
 								</table>
 								<form method="POST" >{% csrf_token %}
 										{{ form.as_table }}
-										<button type="submit" class="save btn btn-default">Save</button>
-                    <input type="submit" name="delete" class="save btn btn-default" value="Delete" ></input>
+										<button type="submit" class="ladda-button ladda-button-demo btn btn-primary"  data-style="zoom-in">Save</button>
+                    <input type="submit" name="delete" class="ladda-button ladda-button-demo btn btn-danger" id=refresh data-style="zoom-in" value="Delete" ></input>
 								</form>
                     </div>
 
@@ -107,10 +107,10 @@
 							<thead>
 								<tr>
 
-                  <td>Dairy</td>
-									<td>Month</td>
-									<td>Product</td>
-									<td>Sales</td>
+                                    <th>Dairy</th>
+									<th>Month</th>
+									<th>Product</th>
+									<th>Sales</th>
 								</tr>
 							</thead>
 							<tbody>
@@ -126,8 +126,8 @@
 						</table>
 						<form method="POST" >{% csrf_token %}
 								{{ form_sale.as_table }}
-								<button type="submit" class="save btn btn-default">Save</button>
-                <input type="submit" name="delete_sale" class="save btn btn-default" value="Delete" ></input>
+								<button type="submit" class="ladda-button ladda-button-demo btn btn-primary"  data-style="zoom-in">Save</button>
+                <input type="submit" name="delete_sale" class="ladda-button ladda-button-demo btn btn-danger" id=refresh1 data-style="zoom-in" value="Delete" ></input>
 						</form>
                 </div>
 
@@ -171,11 +171,11 @@
 							<thead>
 								<tr>
 
-									<td>Month</td>
-									<td>Product</td>
-									<td>Quantity</td>
-									<td>From Dairy</td>
-                                    <td>To Dairy</td>
+									<th>Month</th>
+									<th>Product</th>
+									<th>Quantity</th>
+									<th>From Dairy</th>
+                                    <th>To Dairy</th>
 								</tr>
 							</thead>
 							<tbody>
@@ -196,8 +196,8 @@
             </div>
             <form method="POST" >{% csrf_token %}
                 {{ form_stockin.as_table }}
-                <button type="submit" class="save btn btn-default">Save</button>
-                <input type="submit" name="delete_stockin" class="save btn btn-default" value="Delete" ></input>
+                <button type="submit" class="ladda-button ladda-button-demo btn btn-primary"  data-style="zoom-in">Save</button>
+                <input type="submit" name="delete_stockin" class="ladda-button ladda-button-demo btn btn-danger" id=refresh2 data-style="zoom-in" value="Delete" ></input>
             </form>
         </div>
     </div>
@@ -231,11 +231,11 @@
 							<thead>
 								<tr>
 
-									<td>Month</td>
-									<td>Product</td>
-									<td>Quantity</td>
-                                    <td>From Dairy</td>
-									<td>To Dairy</td>
+									<th>Month</th>
+									<th>Product</th>
+									<th>Quantity</th>
+                                    <th>From Dairy</th>
+									<th>To Dairy</th>
 								</tr>
 							</thead>
 							<tbody>

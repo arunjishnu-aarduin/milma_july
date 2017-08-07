@@ -1614,16 +1614,17 @@ def creamBalancingReportDiaryWise(after_transfer_diary_list,current_diary):
 		if item['type'] == "Shortage":
 			try:
 				cream_after_stock_transfer=" Cream Purchased:"+str(after_transfer_value)+" ,Amount:"+str(after_transfer_value*GeneralCalculation.objects.get(code=15).value)
-				if item['diary']==current_diary:
+				if item['diary'].name==current_diary:
 					cream_purchased+=after_transfer_value
 
 			except Exception as e:
 				print "Exception Handled At 848"
 			cream_after_stock_transfer+=""
 		else:
+
 			try:
 				cream_after_stock_transfer=" Cream sold:"+str(after_transfer_value)+" ,Amount:"+str(after_transfer_value*GeneralCalculation.objects.get(code=16).value)
-				if item['diary'] == current_diary:
+				if item['diary'].name == current_diary:
 					cream_sold+=after_transfer_value
 			except Exception as e:
 				print "Exception Handled At 848"

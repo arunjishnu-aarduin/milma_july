@@ -44,8 +44,8 @@
                 <table class="table table-striped table-bordered table-hover dataTables-example" >
                   <thead>
                     <tr>
-                      <td>Month</td>
-                      <td>Growth Factor</td>
+                      <th>Month</th>
+                      <th>Growth Factor</th>
 
                     </tr>
                   </thead>
@@ -65,8 +65,8 @@
                                                          </table>
                                                          <form method="POST" >{% csrf_token %}
  																														{{ form_procurement.as_table }}
- 																														<button type="submit" class="save btn btn-default">Save</button>
-                                                            <input type="submit" name="delete" class="save btn btn-default" value="Delete" ></input>
+ 																														<button type="submit" class="ladda-button ladda-button-demo btn btn-primary"  data-style="zoom-in">Save</button>
+                                                            <input type="submit" name="delete" class="ladda-button ladda-button-demo btn btn-danger" id=refresh data-style="zoom-in" value="Delete" > </input>
  																												</form>
                     </div>
 
@@ -108,9 +108,9 @@
             <table class="table table-striped table-bordered table-hover dataTables-example" >
               <thead>
                 <tr>
-                  <td>Month</td>
-                  <td>Product Category</td>
-                  <td>Growth Factor</td>
+                  <th>Month</th>
+                  <th>Product Category</th>
+                  <th>Growth Factor</th>
 
                 </tr>
               </thead>
@@ -127,7 +127,7 @@
             </table>
             <form method="POST" >{% csrf_token %}
                 {{ form.as_table }}
-                <button type="submit" class="save btn btn-default">Save</button>
+                <button type="submit" class="ladda-button ladda-button-demo btn btn-primary"  data-style="zoom-in">Save</button>
                 <input type="submit" name="delete_product_growth_factor" class="save btn btn-default" value="Delete" ></input>
             </form>
                 </div>
