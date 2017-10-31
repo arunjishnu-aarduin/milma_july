@@ -21,7 +21,30 @@ import time
 import calendar
 
 
+from django.db.models.signals import pre_delete
+from django.dispatch import receiver
+
+
 # Create your views here.
+
+
+
+
+@receiver(pre_delete,sender=ActualSale)
+def change_actual_sale_month_category(sender, instance=None, **kwargs):
+    try:
+
+
+
+        existing_obj_actual_month_category = ActualMonthCategory.objects.get(diary=instance.diary, month=instance.month,
+                                                                             year=instance.year,
+                                                                             category=instance.product.category)
+
+        existing_obj_actual_month_category.actual_sale = existing_obj_actual_month_category.actual_sale - instance.sales
+        existing_obj_actual_month_category.save(update_fields=['actual_sale'])
+    except Exception as e:
+        print "Exception Handled views,67"+str(e)
+
 
 
 def diary_of_user(user):
