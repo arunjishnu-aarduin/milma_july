@@ -4,6 +4,7 @@ from .models import *
 from django.core.validators import MaxLengthValidator,MaxValueValidator,MinValueValidator
 from django.core.exceptions import ValidationError
 from django.utils.translation import ugettext_lazy as _
+import datetime
 
 #Choices
 
@@ -216,10 +217,11 @@ class GeneralCalculationForm(forms.ModelForm):
         model=GeneralCalculation
         fields=('calculation_Name','value',)
 
-class FinancialYearForm(forms.ModelForm):
-    class Meta:
-        model=ConfigurationAttribute
-        fields=('financial_Year',)
+class FinancialYearForm(forms.Form):
+    Year_Choice = ProductCategoryGrowthFactor.objects.order_by('year').values('year').distinct()
+
+
+    financial_Year=forms.ChoiceField(choices= ((x['year'], x['year']) for x in Year_Choice))
 class WMProcurementRateForm(forms.ModelForm):
     class Meta:
         model=ConfigurationAttribute

@@ -38,7 +38,7 @@ METHOD_CHOICES = (
 #for financial year
 year_dropdown = []
 for y in range(2016, (datetime.datetime.now().year + 5)):
-    year_dropdown.append((y, y))
+	year_dropdown.append((y, y))
 
 #############################################################################################################333
 #funcions
@@ -180,15 +180,16 @@ class FatPercentageYield(models.Model):
 		return self.issue.name+"-"+self.category.name
 class ActualSale(models.Model):
 	month=models.PositiveSmallIntegerField(choices=MONTHS.items())
+	year=models.PositiveSmallIntegerField()
 	product=models.ForeignKey('Product',on_delete=models.CASCADE)
 	sales=models.PositiveIntegerField()
 	diary=models.ForeignKey('Diary',on_delete=models.CASCADE,verbose_name = 'dairy')
 
 	class Meta:
-		unique_together = ('month', 'product','diary',)
+		unique_together = ('month', 'product','diary','year',)
 
 	def __str__(self):
-		return MONTHS[self.month]+"-"+str(self.product.code)+"-"+self.diary.name+"-"+str(self.sales)
+		return str(self.year)+"-"+MONTHS[self.month]+"-"+str(self.product.code)+"-"+self.diary.name+"-"+str(self.sales)
 	@property
 	def growthFactor(self):
 		"""
@@ -200,7 +201,7 @@ class ActualSale(models.Model):
 			return 0
 			"""
 		try:
-			product_category_growth_factor=ProductCategoryGrowthFactor.objects.get(category=self.product.category,month=self.month,diary=self.diary)
+			product_category_growth_factor=ProductCategoryGrowthFactor.objects.get(category=self.product.category,month=self.month,year=self.year,diary=self.diary)
 			return product_category_growth_factor.growth_factor
 		except Exception as e:
 			print "Growth Factor not exist(Sale)"
@@ -224,32 +225,21 @@ class ActualSale(models.Model):
 class ActualStockin(models.Model):
 	diary=models.ForeignKey('Diary',on_delete=models.CASCADE,verbose_name = 'dairy')
 	month=models.PositiveSmallIntegerField(choices=MONTHS.items())
+	year=models.PositiveSmallIntegerField()
 	product=models.ForeignKey('Product',on_delete=models.CASCADE)
 	quantity=models.PositiveIntegerField()
 	from_diary=models.ForeignKey('Diary',on_delete=models.CASCADE,related_name="fromDiary",verbose_name = 'from dairy')
 
 	class Meta:
-		unique_together = ('diary', 'month','product','from_diary',)
+		unique_together = ('diary', 'month','product','from_diary','year',)
 	def __str__(self):
-		return MONTHS[self.month]+"-"+str(self.product.code)+"-"+str(self.quantity)+"-"+self.from_diary.name+"->"+self.diary.name
-
-
-	"""@property
-	def growthFactorStockout(self):
-		try:
-			product_category_growth_factor=ProductCategoryGrowthFactor.objects.get(category=self.product.category,month=self.month,diary=self.diary)
-
-			return product_category_growth_factor.growth_factor
-		except Exception as e:
-			print "Growth Factor not exist(Stockout)"
-			return 0
-"""
+		return str(self.year)+"-"+MONTHS[self.month]+"-"+str(self.product.code)+"-"+str(self.quantity)+"-"+self.from_diary.name+"->"+self.diary.name
 
 
 	@property
 	def growthFactorStockout(self):
 		try:
-			product_category_growth_factor=ProductCategoryGrowthFactor.objects.get(category=self.product.category,month=self.month,diary=self.diary)
+			product_category_growth_factor=ProductCategoryGrowthFactor.objects.get(category=self.product.category,month=self.month,year=self.year,diary=self.diary)
 
 			return product_category_growth_factor.growth_factor
 		except Exception as e:
@@ -267,18 +257,11 @@ class ActualStockin(models.Model):
 
 
 
-	"""@property
-	def growthFactorStockin(self):
-		try:
-			product_category_growth_factor=ProductCategoryGrowthFactor.objects.get(category=self.product.category,month=self.month,diary=self.from_diary)
-			return product_category_growth_factor.growth_factor
-		except Exception as e:
-			print "Growth Factor not exist(Stockin)"
-			return 0"""
+
 	@property
 	def growthFactorStockin(self):
 		try:
-			product_category_growth_factor=ProductCategoryGrowthFactor.objects.get(category=self.product.category,month=self.month,diary=self.diary)
+			product_category_growth_factor=ProductCategoryGrowthFactor.objects.get(category=self.product.category,month=self.month,year=self.year,diary=self.diary)
 			return product_category_growth_factor.growth_factor
 		except Exception as e:
 			print "Growth Factor not exist(Stockin)"
@@ -296,7 +279,7 @@ class ActualStockin(models.Model):
 
 	@property
 	def actualStockOut(self):
-		actual_stock_out=ActualStockin.objects.filter(from_diary=self.diary,month=self.month,product=self.product).aggregate(actual_stock_out=Coalesce(Sum('quantity'),0))['actual_stock_out']
+		actual_stock_out=ActualStockin.objects.filter(from_diary=self.diary,month=self.month,year=self.year,product=self.product).aggregate(actual_stock_out=Coalesce(Sum('quantity'),0))['actual_stock_out']
 		#the above query will return aggregate of actual stockout
 		return actual_stock_out
 
@@ -321,11 +304,12 @@ class ProductCategoryGrowthFactor(models.Model):
 	category=models.ForeignKey('Category',on_delete=models.CASCADE)
 	growth_factor=models.DecimalField(max_digits=8,decimal_places=4)
 	month=models.PositiveSmallIntegerField(choices=MONTHS.items())
+	year = models.PositiveSmallIntegerField(default=datetime.datetime.now().year)
 	diary=models.ForeignKey('Diary',on_delete=models.CASCADE,verbose_name = 'dairy')
 	class Meta:
-		unique_together = ('category', 'month','diary',)
+		unique_together = ('category', 'month','diary','year',)
 	def __str__(self):
-		return MONTHS[self.month]+"-"+self.category.name+"-"+self.diary.name
+		return str(self.year)+"-"+MONTHS[self.month]+"-"+self.category.name+"-"+self.diary.name
 
 
 class ProductConfiguration(models.Model):
@@ -338,17 +322,18 @@ class ProductConfiguration(models.Model):
 
 class ActualWMProcurement(models.Model):
 	month=models.PositiveSmallIntegerField(choices=MONTHS.items())
+	year=models.PositiveSmallIntegerField()
 	procurement=models.DecimalField(max_digits=20,decimal_places=2,validators=[validate_positive])
 	diary=models.ForeignKey('Diary',on_delete=models.CASCADE,verbose_name = 'dairy')
 	class Meta:
-		unique_together = ('month', 'diary',)
+		unique_together = ('month', 'diary','year',)
 	def __str__(self):
-		return MONTHS[self.month]+"-"+self.diary.name+"-"+str(self.procurement)
+		return str(self.year)+"-"+MONTHS[self.month]+"-"+self.diary.name+"-"+str(self.procurement)
 
 	@property
 	def growthFactor(self):
 		try:
-			procurement_growth_factor=ProcurementGrowthFactor.objects.get(month=self.month,diary=self.diary)
+			procurement_growth_factor=ProcurementGrowthFactor.objects.get(month=self.month,year=self.year,diary=self.diary)
 
 			return procurement_growth_factor.growth_factor
 		except Exception as e:
@@ -384,12 +369,13 @@ class ActualWMProcurement(models.Model):
 
 class ProcurementGrowthFactor(models.Model):
 	month=models.PositiveSmallIntegerField(choices=MONTHS.items())
+	year=models.PositiveSmallIntegerField(default=datetime.datetime.now().year)
 	growth_factor=models.DecimalField(max_digits=8,decimal_places=4)
 	diary=models.ForeignKey('Diary',on_delete=models.CASCADE,verbose_name = 'dairy')
 	class Meta:
-		unique_together = ('month', 'diary',)
+		unique_together = ('month', 'diary','year',)
 	def __str__(self):
-		return MONTHS[self.month]+"-"+self.diary.name
+		return str(self.year)+"-"+MONTHS[self.month]+"-"+self.diary.name
 class UserDiaryLink(models.Model):
 	diary=models.ForeignKey('Diary',on_delete=models.CASCADE,verbose_name = 'dairy')
 	user = models.OneToOneField(User, on_delete=models.CASCADE,primary_key=True)
@@ -399,10 +385,11 @@ class UserDiaryLink(models.Model):
 class IssueRequirement(models.Model):
 	diary=models.ForeignKey('Diary',on_delete=models.CASCADE,verbose_name = 'dairy')
 	month = models.PositiveSmallIntegerField(choices=MONTHS.items())
+	year=models.PositiveSmallIntegerField()
 	issue=models.ForeignKey('Issue',on_delete=models.CASCADE)
 	requirement=models.DecimalField(max_digits=20,decimal_places=6)
 	def __str__(self):
-		return str(self.diary.name)+"-"+str(MONTHS[self.month])+"-"+str(self.issue.name)+"-"+str(self.requirement)
+		return str(self.diary.name)+"-"+str(MONTHS[self.month])+"-"+str(self.year)+"-"+str(self.issue.name)+"-"+str(self.requirement)
 
 class InterStockMilkTransferOrder(models.Model):
 	from_diary=models.ForeignKey('Diary',on_delete=models.CASCADE,related_name="from_Diary",verbose_name = 'from dairy')
@@ -431,7 +418,7 @@ class GeneralCalculation(models.Model):
 		return str(self.code)+" "+str(self.name)+" "+str(self.value)
 class ConfigurationAttribute(models.Model):
 
-	financial_Year=models.IntegerField( choices=year_dropdown,verbose_name="")
+
 	issue_requirement_change_status=models.BooleanField()
 	wm_procurement_rate=models.DecimalField(max_digits=15,decimal_places=2,validators=[validate_positive],verbose_name="rate")
 
@@ -447,4 +434,8 @@ class IssueUsedAsCategoryIndirect(models.Model):
 	def __str__(self):
 		return  str(self.issue.name)+"-"+str(self.category.name)
 
-
+#
+# class FetchLog(models.Model):
+#     user=models.ForeignKey(User,)
+#
+#

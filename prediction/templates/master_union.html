@@ -1,5 +1,6 @@
-		{% load static %}
 <!DOCTYPE html>
+		{% load static %}
+
 <html>
 
 
@@ -10,34 +11,34 @@
 
     <title>Milma | Prediction</title>
 
-    <link href={% static 'master/css/bootstrap.min.css' %} rel="stylesheet">
-    <link href={% static 'master/font-awesome/css/font-awesome.css' %} rel="stylesheet">
+    <link href="{% static 'master/css/bootstrap.min.css' %}" rel="stylesheet">
+    <link href="{% static 'master/font-awesome/css/font-awesome.css' %}" rel="stylesheet">
 
-    <link href={% static 'master/css/plugins/dataTables/datatables.min.css' %} rel="stylesheet">
+    <link href="{% static 'master/css/plugins/dataTables/datatables.min.css' %}" rel="stylesheet">
 
-    <link href={% static 'master/css/animate.css' %} rel="stylesheet">
-    <link href={% static 'master/css/style.css' %} rel="stylesheet">
+    <link href="{% static 'master/css/animate.css' %}" rel="stylesheet">
+    <link href="{% static 'master/css/style.css' %}" rel="stylesheet">
 
 <!--loading button
 -->
-		<link rel="stylesheet" href={% static 'master/css/plugins/ladda/ladda-themeless.min.css' %}>
-		<script src={% static 'master/js/plugins/ladda/ladda.jquery.min.js' %}></script>
-		<script src={% static 'master/js/plugins/ladda/spin.min.js' %}></script>
-		<script src={% static 'master/js/plugins/ladda/ladda.min.js' %}></script>
+		<link rel="stylesheet" href="{% static 'master/css/plugins/ladda/ladda-themeless.min.css' %}">
+		<script src="{% static 'master/js/plugins/ladda/ladda.jquery.min.js' %}"></script>
+		<script src="{% static 'master/js/plugins/ladda/spin.min.js' %}"></script>
+		<script src="{% static 'master/js/plugins/ladda/ladda.min.js' %}"></script>
 		<!-- Mainly scripts -->
-		<script src={% static 'master/js/jquery-3.1.1.min.js'%} ></script>
-		<script src={% static 'master/js/bootstrap.min.js'%}></script>
-		<script src={% static 'master/js/plugins/metisMenu/jquery.metisMenu.js'%}></script>
-		<script src={% static 'master/js/plugins/slimscroll/jquery.slimscroll.min.js'%}></script>
-		<script src={% static 'master/js/plugins/dataTables/datatables.min.js'%}></script>
+		<script src="{% static 'master/js/jquery-3.1.1.min.js'%}" ></script>
+		<script src="{% static 'master/js/bootstrap.min.js'%}"></script>
+		<script src="{% static 'master/js/plugins/metisMenu/jquery.metisMenu.js'%}"></script>
+		<script src="{% static 'master/js/plugins/slimscroll/jquery.slimscroll.min.js'%}"></script>
+		<script src="{% static 'master/js/plugins/dataTables/datatables.min.js'%}"></script>
 
 
 		<!-- Custom and plugin javascript -->
-	  <script src={% static 'master/js/inspinia.js'%}></script>
-		<script src={% static 'master/js/plugins/pace/pace.min.js'%}></script>
+	  <script src="{% static 'master/js/inspinia.js'%}"></script>
+		<script src="{% static 'master/js/plugins/pace/pace.min.js'%}"></script>
 
 		<!-- Page-Level Scripts -->
-		<script src={% static 'master/js/datatable_custom.js'%}></script>
+		<script src="{% static 'master/js/datatable_custom.js'%}"></script>
         <!-- For Ladda button Effect -->
 		<script>
 
@@ -55,7 +56,7 @@
 				 // Do something in backend and then stop ladda
 				 setTimeout(function(){
 						 l.ladda('stop');
-				 },2000)
+				 },2000);
 
 
 		 });
@@ -80,7 +81,7 @@
             <ul class="nav metismenu" id="side-menu">
                 <li class="nav-header">
                     <div class="dropdown profile-element"> <span>
-                            <img alt="image" class="img-circle" src={% static 'master/img/profile_small.jpg'%}/>
+                            <img alt="image" class="img-circle" src="{% static 'master/img/profile_small.jpg'%}"/>
                              </span>
                         <a data-toggle="dropdown" class="dropdown-toggle" href="#">
                             <span class="clear"> <span class="block m-t-xs"> <strong class="font-bold">{{user.username}}</strong>
@@ -221,6 +222,7 @@
 
 
 									<li>
+
 											<a href="/logout/">
 													<i class="fa fa-sign-out"></i> Log out
 											</a>
