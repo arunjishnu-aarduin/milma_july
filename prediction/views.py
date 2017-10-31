@@ -1307,9 +1307,11 @@ def home(request):
 
     if Year_Choice.count() == 0:
         request.session['session_current_year'] = current_year
+        request.session['session_next_year']=current_year+1
 
     else:
         request.session['session_current_year'] = Year_Choice.last()['year']
+        request.session['session_next_year']=Year_Choice.last()['year']+1
 
         # endregion
 
@@ -2754,6 +2756,7 @@ def financialYear(request):
             data = form.cleaned_data
 
             request.session['session_current_year'] = data['financial_Year']
+            request.session['session_next_year'] = int(data['financial_Year'])+1
 
             return redirect(financialYear)
 
